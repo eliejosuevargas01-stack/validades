@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <title>Gestão de Produtos - Sistema de Cadastro e Controle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style id="auth-guard-style">
+      /* Evita flash do index antes da checagem */
+      body { display: none !important; }
+    </style>
+    <script>
+      (function enforceAuthEarly() {
+        const AUTH_KEY = "gp_auth";
+        const USER_KEY = "gp_user";
+        const isAuthenticated = localStorage.getItem(AUTH_KEY) === "1";
+        const hasUser = Boolean(localStorage.getItem(USER_KEY));
+        if (!isAuthenticated || !hasUser) {
+          window.location.replace("login.html");
+          return;
+        }
+        // Libera renderização do index após validação
+        const guardStyle = document.getElementById("auth-guard-style");
+        if (guardStyle) guardStyle.remove();
+        document.addEventListener("DOMContentLoaded", () => {
+          document.body.style.display = "";
+        });
+      })();
+    </script>
     
     <!-- Fuentes modernas -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
