@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login | Gestão de Produtos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-primary: #f5f7fb;
+        --accent-primary: #2563eb;
+        --accent-secondary: #06b6d4;
+        --text-primary: #0f172a;
+        --text-muted: #475569;
+        --border: rgba(15, 23, 42, 0.12);
+        --shadow: 0 16px 50px rgba(15, 23, 42, 0.12);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg-primary);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+      body::before, body::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(60px);
+        opacity: 0.6;
+        z-index: 0;
+      }
+      body::before {
+        width: 360px;
+        height: 360px;
+        background: rgba(37, 99, 235, 0.18);
+        top: -80px;
+        left: -60px;
+      }
+      body::after {
+        width: 300px;
+        height: 300px;
+        background: rgba(6, 182, 212, 0.18);
+        bottom: -60px;
+        right: -40px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 1.75rem;
+        width: min(460px, 100%);
+        position: relative;
+        z-index: 1;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+      }
+      .brand-mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        box-shadow: 0 12px 36px rgba(37, 99, 235, 0.28);
+      }
+      h1 {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+      }
+      p.lead {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .tab {
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 0.7rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .tab.active {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.24);
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      label {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text-primary);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+      }
+      input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      }
+      .btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        font-weight: 700;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: #fff;
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.26);
+      }
+      .status {
+        min-height: 20px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+      .status.ok { color: #16a34a; }
+      .status.err { color: #dc2626; }
+      .switch {
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+      .switch button {
+        border: none;
+        background: transparent;
+        color: var(--accent-primary);
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="brand">
+        <div class="brand-mark">GP</div>
+        <div>
+          <h1>Gestão de Produtos</h1>
+          <p class="lead">Acesse sua conta para visualizar e cadastrar produtos.</p>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" type="button" data-tab="login">Login</button>
+        <button class="tab" type="button" data-tab="signup">Criar conta</button>
+      </div>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="login-password">Senha</label>
+          <input id="login-password" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn" type="submit">Entrar</button>
+        <div class="status" id="login-status"></div>
+      </form>
+
+      <form id="signup-form" style="display: none;">
+        <div class="field">
+          <label for="signup-name">Nome</label>
+          <input id="signup-name" type="text" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="signup-email">Email</label>
+          <input id="signup-email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="signup-password">Senha</label>
+          <input id="signup-password" type="password" autocomplete="new-password" required />
+        </div>
+        <button class="btn" type="submit">Criar conta</button>
+        <div class="status" id="signup-status"></div>
+      </form>
+
+      <div class="switch">
+        <span id="switch-text">Não tem conta?</span>
+        <button type="button" id="switch-btn">Criar conta</button>
+      </div>
+    </div>
+
+    <script>
+      const AUTH_KEY = "gp_auth";
+      const USER_KEY = "gp_user";
+      const loginForm = document.getElementById("login-form");
+      const signupForm = document.getElementById("signup-form");
+      const loginStatus = document.getElementById("login-status");
+      const signupStatus = document.getElementById("signup-status");
+      const tabs = document.querySelectorAll("[data-tab]");
+      const switchBtn = document.getElementById("switch-btn");
+      const switchText = document.getElementById("switch-text");
+
+      const storedAuth = localStorage.getItem(AUTH_KEY) === "1";
+      const storedEmail = localStorage.getItem(USER_KEY);
+      if (storedAuth && storedEmail) {
+        window.location.href = "index.html";
+      } else if (storedAuth && !storedEmail) {
+        localStorage.removeItem(AUTH_KEY);
+      }
+
+      const LOGIN_ENDPOINTS = ["https://myn8n.seommerce.shop/webhook/login"];
+      const SIGNUP_ENDPOINTS = ["https://myn8n.seommerce.shop/webhook/singin"];
+
+      function setStatus(el, text, type = "") {
+        if (!el) return;
+        el.textContent = text;
+        el.className = "status";
+        if (type === "ok") el.classList.add("ok");
+        if (type === "err") el.classList.add("err");
+      }
+
+      async function postJsonWithFallback(urls, body) {
+        let lastError = null;
+        for (const url of urls) {
+          try {
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error("Erro HTTP " + res.status);
+            return res;
+          } catch (err) {
+            lastError = err;
+          }
+        }
+        throw lastError || new Error("Falha ao enviar dados.");
+      }
+
+      function goToDashboard(email) {
+        localStorage.setItem(AUTH_KEY, "1");
+        if (email) {
+          localStorage.setItem(USER_KEY, email);
+        }
+        window.location.href = "index.html";
+      }
+
+      function toggleTab(tab) {
+        const isLogin = tab === "login";
+        loginForm.style.display = isLogin ? "flex" : "none";
+        signupForm.style.display = isLogin ? "none" : "flex";
+        tabs.forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
+        switchText.textContent = isLogin ? "Não tem conta?" : "Já tem conta?";
+        switchBtn.textContent = isLogin ? "Criar conta" : "Fazer login";
+        setStatus(loginStatus, "");
+        setStatus(signupStatus, "");
+      }
+
+      tabs.forEach((btn) => {
+        btn.addEventListener("click", () => toggleTab(btn.dataset.tab));
+      });
+
+      switchBtn.addEventListener("click", () => {
+        const activeTab = loginForm.style.display !== "none" ? "signup" : "login";
+        toggleTab(activeTab);
+      });
+
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = (document.getElementById("login-email").value || "").trim();
+        const password = (document.getElementById("login-password").value || "").trim();
+        if (!email || !password) {
+          setStatus(loginStatus, "Preencha email e senha.", "err");
+          return;
+        }
+        const isValidEmail = /\S+@\S+\.\S+/.test(email);
+        if (!isValidEmail) {
+          setStatus(loginStatus, "Digite um email válido.", "err");
+          return;
+        }
+        setStatus(loginStatus, "Enviando login...");
+        try {
+          const res = await postJsonWithFallback(LOGIN_ENDPOINTS, {
+            user: email,
+            email,
+            password,
+          });
+          const isJson = res?.headers?.get?.("content-type")?.includes("application/json");
+          let data = null;
+          if (isJson) {
+            try {
+              data = await res.clone().json();
+            } catch (err) {
+              console.warn("Resposta de login não é JSON válido:", err);
+            }
+          }
+          const loginMessage =
+            (typeof data === "string" && data) ||
+            (data && typeof data === "object" && data.login) ||
+            "";
+
+          const isEmptyArray = Array.isArray(data) && data.length === 0;
+          const isUserNotFound =
+            typeof loginMessage === "string" &&
+            loginMessage.toLowerCase().includes("usuario não encontrado");
+
+          if (!data || isEmptyArray || isUserNotFound) {
+            setStatus(loginStatus, "Credenciais inválidas ou usuário não encontrado.", "err");
+            return;
+          }
+          setStatus(loginStatus, "Login enviado.", "ok");
+          goToDashboard(email);
+        } catch (err) {
+          setStatus(loginStatus, `Erro ao enviar login: ${err.message || err}`, "err");
+        }
+      });
+
+      signupForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = (document.getElementById("signup-name").value || "").trim();
+        const email = (document.getElementById("signup-email").value || "").trim();
+        const password = (document.getElementById("signup-password").value || "").trim();
+        if (!name || !email || !password) {
+          setStatus(signupStatus, "Preencha nome, email e senha.", "err");
+          return;
+        }
+        const isValidEmail = /\S+@\S+\.\S+/.test(email);
+        if (!isValidEmail) {
+          setStatus(signupStatus, "Digite um email válido.", "err");
+          return;
+        }
+        setStatus(signupStatus, "Enviando cadastro...");
+        try {
+          await postJsonWithFallback(SIGNUP_ENDPOINTS, {
+            name,
+            user: email,
+            email,
+            password,
+          });
+          setStatus(signupStatus, "Cadastro enviado.", "ok");
+          goToDashboard(email);
+        } catch (err) {
+          setStatus(signupStatus, `Erro ao cadastrar: ${err.message || err}`, "err");
+        }
+      });
+
+      toggleTab("login");
+    </script>
+  </body>
+</html>
