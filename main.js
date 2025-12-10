@@ -13,6 +13,7 @@ const barcodeStatus = document.getElementById("barcode-status");
 const barcodeResult = document.getElementById("barcode-result");
 const startScanBtn = document.getElementById("start-scan-btn");
 const stopScanBtn = document.getElementById("stop-scan-btn");
+const retryScanBtn = document.getElementById("retry-scan-btn");
 const barcodeManual = document.getElementById("barcode-manual");
 const barcodeGrid = document.getElementById("barcode-grid");
 const barcodePanel = document.getElementById("barcode-panel");
@@ -76,7 +77,7 @@ let currentEditTargets = [];
 
 let workbook = null;
 const versionBadge = document.getElementById("version-badge");
-const BASE_VERSION = "1.3.8";
+const BASE_VERSION = "1.3.9";
 
 function setVersionBadge(versionText = BASE_VERSION) {
   if (versionBadge) {
@@ -447,8 +448,25 @@ async function processDetectedEan(ean, source = "scanner") {
   barcodeResult.textContent = `${source === "manual" ? "EAN digitado" : "EAN detectado"}: ${onlyDigits}`;
   if (barcodeManual) barcodeManual.value = onlyDigits;
 
-  const existing = itens.find((it) => it.codigo === onlyDigits);
+  let target = itens.find((it) => it.codigo === onlyDigits) || null;
   const emptySlot = itens.find((it) => !it.codigo);
+  const wasExisting = Boolean(target);
+
+  if (!target && emptySlot) {
+    emptySlot.codigo = onlyDigits;
+    emptySlot.allowEditCode = false;
+    target = emptySlot;
+  } else if (!target) {
+    const newItem = createItemFromCode(onlyDigits, "");
+    newItem.allowEditCode = false;
+    itens.push(newItem);
+    target = newItem;
+  }
+
+  renderItens();
+  syncItemCodeInput(target);
+  focusItemCode(target);
+
   setBarcodeStatus("Consultando produto no servidor...");
   const fetchedProduct = await fetchProductFromAction(onlyDigits);
   const foundFromAction = Boolean(fetchedProduct);
@@ -457,49 +475,27 @@ async function processDetectedEan(ean, source = "scanner") {
     nome = await lookupProductByEan(onlyDigits);
   }
 
-  if (existing) {
-    if (!existing.nome && nome) existing.nome = nome;
+  if (target) {
+    if (!target.nome && nome) target.nome = nome;
     if (fetchedProduct) {
-      applyProductInfoToItem(existing, fetchedProduct);
+      applyProductInfoToItem(target, fetchedProduct);
     }
-    renderItens();
-    setBarcodeStatus(
-      foundFromAction
-        ? "Produto encontrado e dados preenchidos. EAN já estava na lista."
-        : "EAN já adicionado à lista.",
-      "ok"
-    );
-    focusItemCode(existing);
-  } else if (emptySlot) {
-    emptySlot.codigo = onlyDigits;
-    emptySlot.allowEditCode = false;
-    if (!emptySlot.nome && nome) emptySlot.nome = nome;
-    if (fetchedProduct) {
-      applyProductInfoToItem(emptySlot, fetchedProduct);
-    }
-    renderItens();
-    setBarcodeStatus(
-      foundFromAction
-        ? "Produto encontrado e pré-preenchido. Confira e envie."
-        : "Produto não encontrado, preencha e envie para cadastrar.",
-      "ok"
-    );
-    focusItemCode(emptySlot);
-  } else {
-    const newItem = createItemFromCode(onlyDigits, nome || "");
-    if (fetchedProduct) {
-      applyProductInfoToItem(newItem, fetchedProduct);
-    }
-    itens.push(newItem);
-    renderItens();
-    setBarcodeStatus(
-      foundFromAction
-        ? "Produto encontrado e pré-preenchido. Confira e envie."
-        : "Produto não encontrado, preencha e envie para cadastrar.",
-      "ok"
-    );
-    focusItemCode(newItem);
   }
+
+  renderItens();
+  syncItemCodeInput(target);
+  focusItemCode(target);
+
+  setBarcodeStatus(
+    wasExisting
+      ? foundFromAction
+        ? "Produto encontrado e dados preenchidos. EAN já estava na lista."
+        : "EAN já adicionado à lista."
+      : foundFromAction
+      ? "Produto encontrado e pré-preenchido. Confira e envie."
+      : "Produto não encontrado, preencha e envie para cadastrar.",
+    "ok"
+  );
 }
 
 const html5Formats = [
@@ -534,8 +530,8 @@ async function startHtml5Scanner() {
 
     const config = {
       fps: 10,
-      qrbox: { width: 220, height: 220 },
-      aspectRatio: 1.7777778,
+      qrbox: { width: 360, height: 120 },
+      aspectRatio: 2.0,
       formatsToSupport: html5Formats,
       experimentalFeatures: { useBarCodeDetectorIfSupported: true },
       rememberLastUsedCamera: true
@@ -578,6 +574,12 @@ function initBarcodeUI() {
   setBarcodeStatus("Pronto para escanear. Clique em Abrir câmera.");
   if (startScanBtn) startScanBtn.addEventListener("click", startHtml5Scanner);
   if (stopScanBtn) stopScanBtn.addEventListener("click", () => stopHtml5Scanner());
+  if (retryScanBtn) {
+    retryScanBtn.addEventListener("click", () => {
+      stopHtml5Scanner(true);
+      startHtml5Scanner();
+    });
+  }
   stopScanBtn.disabled = true;
   if (barcodeGrid) barcodeGrid.classList.add("collapsed");
 }
@@ -1604,6 +1606,7 @@ const produtoForm = document.getElementById("produto-form");
 const mensagem = document.getElementById("mensagem");
 const itensContainer = document.getElementById("itens-container");
 const enviarTodosBtn = document.getElementById("enviar-todos-btn");
+const addItemBtn = document.getElementById("add-item-btn");
 let itens = [];
 
 function ensureFormPanelVisible() {
@@ -1621,10 +1624,23 @@ function ensureAtLeastOneItem() {
 
 openFormBtn.addEventListener("click", () => {
   ensureFormPanelVisible();
-  formPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (barcodePanel) {
+    barcodePanel.style.display = "block";
+    barcodePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    startHtml5Scanner();
+  } else {
+    formPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 });
 
 produtoForm.addEventListener("submit", (event) => event.preventDefault());
+
+if (addItemBtn) {
+  addItemBtn.addEventListener("click", () => {
+    itens.push(createItemFromCode("", ""));
+    renderItens();
+  });
+}
 
 function createItemFromCode(codigo, nome = "") {
   return {
@@ -1645,11 +1661,21 @@ function createItemFromCode(codigo, nome = "") {
 function focusItemCode(item) {
   if (!item) return;
   const card = document.querySelector(`[data-id="${item.id}"]`);
-  const codeInput = card?.querySelector(".field input[type='text']");
+  const codeInput = card?.querySelector("[data-role='item-ean']");
   if (codeInput) {
     codeInput.value = item.codigo || "";
     codeInput.readOnly = !item.allowEditCode && Boolean(item.codigo);
     codeInput.focus();
+  }
+}
+
+function syncItemCodeInput(item) {
+  if (!item) return;
+  const card = document.querySelector(`[data-id="${item.id}"]`);
+  const codeInput = card?.querySelector("[data-role='item-ean']");
+  if (codeInput) {
+    codeInput.value = item.codigo || "";
+    codeInput.readOnly = !item.allowEditCode && Boolean(item.codigo);
   }
 }
 
@@ -1734,46 +1760,19 @@ function renderItens() {
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.className = "btn btn-secondary btn-sm";
-    removeBtn.textContent = "Remover local";
+    removeBtn.textContent = "Remover";
     removeBtn.addEventListener("click", () => {
       itens = itens.filter((it) => it.id !== item.id);
       renderItens();
     });
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "btn btn-error btn-sm";
-    deleteBtn.textContent = "Eliminar remoto";
-    deleteBtn.addEventListener("click", async () => {
-      const password = requestDeletePassword();
-      if (!password) {
-        mensagem.textContent = "Eliminação cancelada.";
-        mensagem.className = "erro";
-        return;
-      }
-      try {
-        await postJsonWithFallback(getEndpoints("actions"), {
-          action: "apagar",
-          id: item.codigo || item.id || "",
-          password,
-          ...getUserPayload(),
-        });
-        mensagem.textContent = "Solicitado eliminar produto no servidor.";
-        mensagem.className = "ok";
-      } catch (err) {
-        mensagem.textContent = `Erro ao eliminar remoto: ${err.message || err}`;
-        mensagem.className = "erro";
-      }
-    });
-
     actions.appendChild(removeBtn);
-    actions.appendChild(deleteBtn);
     header.appendChild(title);
     header.appendChild(actions);
     card.appendChild(header);
 
     const codeField = document.createElement("div");
-    codeField.className = "field";
+    codeField.className = "field ean-field";
     const codeLabel = document.createElement("label");
     codeLabel.textContent = "Código de barras (EAN)";
     const codeInput = document.createElement("input");
@@ -1782,6 +1781,7 @@ function renderItens() {
     codeInput.readOnly = !item.allowEditCode && Boolean(item.codigo);
     codeInput.required = true;
     codeInput.placeholder = "Digite ou escaneie o EAN";
+    codeInput.dataset.role = "item-ean";
     codeInput.addEventListener("input", (e) => {
       const digits = (e.target.value || "").replace(/\D/g, "");
       e.target.value = digits;

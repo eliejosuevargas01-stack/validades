@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Controle de Validades • Cadastre e controle em minutos</title>
+    <style id="sales-guard-style">
+      body { display: none; }
+    </style>
+    <script>
+      (function salesAuthRouting() {
+        const AUTH_KEY = "gp_auth";
+        const USER_KEY = "gp_user";
+        const isAuthenticated = localStorage.getItem(AUTH_KEY) === "1";
+        const hasUser = Boolean(localStorage.getItem(USER_KEY));
+        if (isAuthenticated && hasUser) {
+          window.location.replace("index.html");
+          return;
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+          const guardStyle = document.getElementById("sales-guard-style");
+          if (guardStyle) guardStyle.remove();
+          document.body.style.display = "block";
+        });
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+      :root {
+        --bg-primary: #f5f7fb;
+        --bg-secondary: #f8fafc;
+        --bg-tertiary: #eef2f7;
+        --text-primary: #0f172a;
+        --text-secondary: #1f2937;
+        --text-muted: #475569;
+        --accent-primary: #7c3aed;
+        --accent-secondary: #a855f7;
+        --accent-success: #22c55e;
+        --accent-warning: #fbbf24;
+        --accent-error: #ef4444;
+        --border-light: rgba(15, 23, 42, 0.08);
+        --border-medium: rgba(15, 23, 42, 0.16);
+        --shadow-sm: 0 8px 20px rgba(15, 23, 42, 0.08);
+        --shadow-md: 0 14px 40px rgba(15, 23, 42, 0.12);
+        --shadow-lg: 0 22px 80px rgba(15, 23, 42, 0.16);
+        --radius-sm: 10px;
+        --radius-md: 14px;
+        --radius-lg: 18px;
+        --radius-xl: 22px;
+        --blur: blur(16px);
+        --gradient: radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.12), transparent 36%), radial-gradient(circle at 82% 8%, rgba(6, 182, 212, 0.12), transparent 32%), radial-gradient(circle at 42% 82%, rgba(16, 185, 129, 0.12), transparent 30%);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.6;
+        color: var(--text-primary);
+        background: var(--bg-primary);
+        min-height: 100vh;
+        padding: 1.25rem 1rem 2.5rem;
+        position: relative;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: var(--gradient);
+        z-index: 0;
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      .page {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: relative;
+        z-index: 1;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.85rem 1.15rem;
+        margin-bottom: 0.5rem;
+        background: #fff;
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: var(--blur);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .brand-logo {
+        height: 44px;
+        width: auto;
+        border-radius: 10px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 120px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 1px solid var(--border-light);
+        background: #f8fafc;
+      }
+      .panel {
+        background: #fff;
+        backdrop-filter: var(--blur);
+        border-radius: var(--radius-xl);
+        padding: 1.5rem 1.75rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-medium);
+        position: relative;
+        overflow: hidden;
+      }
+      .panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0));
+      }
+      h1, h2, h3 {
+        font-weight: 700;
+        line-height: 1.25;
+        color: var(--text-primary);
+      }
+      h1 { font-size: 1.9rem; margin-bottom: 0.2rem; }
+      h2 { font-size: 1.35rem; margin-bottom: 0.4rem; }
+      p { color: var(--text-muted); }
+      .hero {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
+        align-items: start;
+      }
+      .cta-row {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-top: 0.9rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.7rem 1.2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        border: 1px solid transparent;
+        outline: none;
+        white-space: nowrap;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: #fff;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+        border-color: rgba(37, 99, 235, 0.35);
+      }
+      .btn-secondary {
+        background-color: #e2e8f0;
+        color: var(--text-primary);
+        border: 1px solid var(--border-medium);
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+      .metric {
+        background: #f8fafc;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 0.9rem 1rem;
+        box-shadow: var(--shadow-sm);
+      }
+      .metric strong { font-size: 1.4rem; color: var(--accent-primary); display: block; }
+      .metric span { color: var(--text-muted); font-size: 0.95rem; }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+      }
+      .card {
+        background: #f8fafc;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 1.1rem;
+        box-shadow: var(--shadow-sm);
+      }
+      .quote { color: var(--text-primary); font-size: 1.05rem; }
+      .author { color: var(--text-muted); font-weight: 600; }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: #e0f2fe;
+        border: 1px solid #bfdbfe;
+        font-size: 0.9rem;
+        color: #075985;
+        font-weight: 700;
+      }
+      .section {
+        display: grid;
+        gap: 0.8rem;
+      }
+      .list {
+        display: grid;
+        gap: 0.45rem;
+        color: var(--text-muted);
+      }
+      .cards img {
+        width: 100%;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+        object-fit: cover;
+      }
+      .sheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        background: #fff;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+      }
+      .sheet-table th,
+      .sheet-table td {
+        padding: 0.65rem 0.75rem;
+        border-bottom: 1px solid var(--border-light);
+        text-align: left;
+        white-space: nowrap;
+      }
+      .sheet-table thead {
+        background: #f1f5f9;
+        color: var(--text-primary);
+        font-weight: 700;
+      }
+      .sheet-table tbody tr:hover {
+        background: #f8fafc;
+      }
+      .status-pill-small {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #075985;
+        background: #e0f2fe;
+        border: 1px solid #bfdbfe;
+      }
+      .expiry-red { background: #ffe2e2; }
+      .expiry-yellow { background: #fff4d4; }
+      .expiry-green { background: #e5f8ed; }
+      .sheet-table tbody tr.expiry-red td { background: #ffe2e2; }
+      .sheet-table tbody tr.expiry-yellow td { background: #fff4d4; }
+      .sheet-table tbody tr.expiry-green td { background: #e5f8ed; }
+      .status-pill-small.ok {
+        color: #166534;
+        background: #dcfce7;
+        border-color: #bbf7d0;
+      }
+      .status-pill-small.warn {
+        color: #92400e;
+        background: #fef3c7;
+        border-color: #fcd34d;
+      }
+      .status-pill-small.crit {
+        color: #b91c1c;
+        background: #fee2e2;
+        border-color: #fecdd3;
+      }
+      .inline-metrics {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .pill-accent {
+        background: #e0f2fe;
+        color: #075985;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        padding: 0.4rem 0.75rem;
+        font-weight: 700;
+      }
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+      .step {
+        background: #f8fafc;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+      }
+      .step strong {
+        display: block;
+        margin-bottom: 0.35rem;
+        color: var(--text-primary);
+      }
+      .cta-block {
+        text-align: center;
+        display: grid;
+        gap: 0.6rem;
+      }
+      @media (max-width: 900px) {
+        body { padding: 1rem 0.75rem; }
+        .panel { padding: 1.25rem; }
+        .topbar { flex-direction: column; align-items: flex-start; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="topbar">
+        <div class="brand">
+          <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+          <div>
+            <div style="font-weight:700;">Controle de Validades</div>
+            <small style="color:var(--muted);">Cadastro rápido + controle automático</small>
+          </div>
+        </div>
+        <div class="pill">Versão 1.3.9 • Leitor EAN inteligente</div>
+      </div>
+
+      <div class="panel hero">
+        <div class="section">
+          <div class="badge">Evite perdas, multas e produtos vencidos</div>
+          <h1>O app que automatiza sua gestão de validades — simples, rápido e inteligente.</h1>
+          <p>Use a câmera, escaneie o código de barras e envie direto para a planilha inteligente. Acabe com rupturas, multas e retrabalho sem sistemas caros ou treinamentos longos.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="login.html#signup">Criar conta e começar</a>
+          </div>
+          <div class="inline-metrics">
+            <span class="pill">3x mais rápido que lançamento manual</span>
+            <span class="pill">98% menos erros de digitação</span>
+            <span class="pill">Alertas automáticos de validade</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="badge">Fluxo em 3 passos</div>
+          <div class="steps" style="margin-top:0.6rem;">
+            <div class="step">
+              <strong>1. Escaneie o EAN</strong>
+              <p>Leitura automática, rápida e precisa pelo celular.</p>
+            </div>
+            <div class="step">
+              <strong>2. Informe nome, quantidade e validade</strong>
+              <p>Somente os campos essenciais, nada de telas confusas.</p>
+            </div>
+            <div class="step">
+              <strong>3. Envie para a planilha inteligente</strong>
+              <p>Produtos críticos sobem para o topo e você age a tempo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Por que existe?</h2>
+        <div class="section">
+          <p>Pequenos e médios mercados perdem dinheiro e correm risco de multas por falta de controle de validade. Nosso app nasceu para proteger o caixa e trazer paz para o dono: tudo no celular, barato e eficiente.</p>
+          <div class="cards">
+            <div class="card">
+              <h3>Dor → Solução</h3>
+              <div class="list">
+                <span><strong>Perdas e multas:</strong> controle automático evita vendas vencidas.</span>
+                <span><strong>Rotatividade lenta:</strong> produtos com validade próxima aparecem primeiro.</span>
+                <span><strong>Sistemas caros:</strong> apenas câmera + login. Sem complicação.</span>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Benefícios imediatos</h3>
+              <div class="list">
+                <span>✔ Redução de quebras e perdas.</span>
+                <span>✔ Rotatividade inteligente e rápida.</span>
+                <span>✔ Sem planilhas quebradas, sem retrabalho.</span>
+                <span>✔ Relatórios e status por produto em tempo real.</span>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Relatório diário opcional</h3>
+              <p>Receba por e-mail itens que vencem na semana, produtos críticos e sugestões de movimentação.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Como o fluxo funciona na operação</h2>
+        <div class="steps" style="margin-top:0.6rem;">
+          <div class="step">
+            <strong>1. Ronda rápida</strong>
+            <p>Equipe passa com o celular escaneando EAN.</p>
+          </div>
+          <div class="step">
+            <strong>2. Cadastro em segundos</strong>
+            <p>Nome, quantidade e validade enviados em lote.</p>
+          </div>
+          <div class="step">
+            <strong>3. Planilha inteligente</strong>
+            <p>Itens críticos sobem; você sabe o que agir hoje.</p>
+          </div>
+          <div class="step">
+            <strong>4. Rotatividade sem perdas</strong>
+            <p>Tire da prateleira o que vai vencer e evite multa.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Veja a planilha organizada na prática</h2>
+        <p style="margin-bottom:0.75rem;">Exemplo real de como os produtos ficam ordenados pela validade no painel.</p>
+        <div style="overflow-x:auto;">
+          <table class="sheet-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>EAN</th>
+                <th>Nome</th>
+                <th>Validade</th>
+                <th>Qtd</th>
+                <th>Troca</th>
+                <th>Rotatividade</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="sample-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Risco de não usar</h2>
+        <div class="list">
+          <span>✖ Produtos vencem escondidos na prateleira.</span>
+          <span>✖ Fiscalização autua e gera multas e reputação ruim.</span>
+          <span>✖ Prejuízo se acumula mês após mês.</span>
+        </div>
+        <div class="list" style="margin-top:0.8rem;">
+          <strong style="color:var(--text-primary);">Com o app:</strong>
+          <span>✓ Alertas e lista crítica todo dia.</span>
+          <span>✓ Tudo registrado com login e segurança.</span>
+          <span>✓ Rotatividade feita antes da perda.</span>
+        </div>
+      </div>
+
+      <div class="panel" style="text-align:center;">
+        <div class="cta-block">
+          <div class="badge" style="margin: 0 auto;">Pronto para eliminar perdas?</div>
+          <h2>Crie sua conta e comece a testar agora mesmo.</h2>
+          <p>Login obrigatório, dados seguros e fluxo otimizado para barcode.</p>
+          <div class="cta-row" style="justify-content:center;">
+            <a class="btn btn-primary" href="login.html#signup">Testar agora</a>
+            <a class="btn btn-secondary" href="login.html">Já tenho conta</a>
+          </div>
+        </div>
+      </div>
+      <footer style="text-align:center; color: var(--text-muted); font-size: 0.95rem; padding: 1rem 0 0.5rem;">
+        Landing Controle de Validades • Contato: <a href="mailto:contato@controledevalidades.com" style="color: var(--accent-primary); font-weight:700; text-decoration:none;">contato@controledevalidades.com</a>
+      </footer>
+    </div>
+    <script>
+      (function demoExpiryColors() {
+        const sampleData = [
+          { id: "1155", ean: "7897412583690", nome: "Queijo Mussarela 500g", qtd: 9, troca: "NÃO", rota: "Média", offset: 2, status: "Crítico" },
+          { id: "1170", ean: "7894561230987", nome: "Pão de Forma Integral", qtd: 14, troca: "NÃO", rota: "Média", offset: 5, status: "Atenção" },
+          { id: "1188", ean: "7899988776655", nome: "Leite UHT 1L", qtd: 32, troca: "SIM", rota: "Alta", offset: 7, status: "OK" },
+          { id: "1203", ean: "7891234567890", nome: "Iogurte Integral 170g", qtd: 18, troca: "NÃO", rota: "Alta", offset: 12, status: "OK" },
+          { id: "1099", ean: "7891478523690", nome: "Chocolate 90g", qtd: 22, troca: "NÃO", rota: "Alta", offset: 15, status: "OK" },
+          { id: "1108", ean: "7893216549870", nome: "Biscoito Recheado 140g", qtd: 26, troca: "NÃO", rota: "Alta", offset: 30, status: "OK" },
+          { id: "1122", ean: "7898529631470", nome: "Refrigerante 2L", qtd: 40, troca: "SIM", rota: "Alta", offset: 45, status: "OK" },
+        ];
+
+        const formatDate = (dt) => {
+          const dd = String(dt.getDate()).padStart(2, "0");
+          const mm = String(dt.getMonth() + 1).padStart(2, "0");
+          const yyyy = dt.getFullYear();
+          return `${dd}/${mm}/${yyyy}`;
+        };
+
+        const now = new Date();
+        const tbody = document.getElementById("sample-table-body");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const enriched = sampleData.map((item) => {
+          const dt = new Date(now);
+          dt.setDate(dt.getDate() + item.offset);
+          const diffMs = dt.getTime() - now.getTime();
+          const days = Math.floor(diffMs / (24 * 3600 * 1000));
+          let cls = "expiry-yellow";
+          if (days > 7) cls = "expiry-green";
+          else if (days >= 4 && days <= 7) cls = "expiry-yellow";
+          else if (days >= 0 && days <= 3) cls = "expiry-red";
+          else if (days < 0) cls = "expiry-red";
+          return { ...item, date: dt, days, cls };
+        }).sort((a, b) => a.date - b.date);
+
+        enriched.forEach((item) => {
+          const tr = document.createElement("tr");
+          tr.classList.add(item.cls);
+          const statusClass =
+            item.status === "Crítico" ? "crit" : item.status === "Atenção" ? "warn" : "ok";
+          tr.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.ean}</td>
+            <td>${item.nome}</td>
+            <td>${formatDate(item.date)}</td>
+            <td>${item.qtd}</td>
+            <td>${item.troca}</td>
+            <td>${item.rota}</td>
+            <td><span class="status-pill-small ${statusClass}">${item.status}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })();
+    </script>
+  </body>
+</html>

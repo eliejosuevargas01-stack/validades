@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Gestão de Produtos - Sistema de Cadastro e Controle</title>
+    <title>Controle de Validades - Sistema de Cadastro e Controle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style id="auth-guard-style">
       /* Evita flash do index antes da checagem */
@@ -15,7 +15,7 @@
         const isAuthenticated = localStorage.getItem(AUTH_KEY) === "1";
         const hasUser = Boolean(localStorage.getItem(USER_KEY));
         if (!isAuthenticated || !hasUser) {
-          window.location.replace("login.html");
+          window.location.replace("sales.html");
           return;
         }
         // Libera renderização do index após validação
@@ -31,6 +31,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     
     
     <style>
@@ -141,16 +142,10 @@
         letter-spacing: 0.02em;
       }
 
-      .brand-mark {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        display: grid;
-        place-items: center;
-        color: #fff;
-        font-weight: 800;
-        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
+      .brand-logo {
+        height: 44px;
+        width: auto;
+        border-radius: 10px;
       }
 
       .top-actions {
@@ -517,96 +512,6 @@
         gap: 0.5rem;
       }
 
-      .extra-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        border-radius: var(--radius-md);
-        border: 1px dashed var(--border-medium);
-        background: var(--bg-secondary);
-      }
-
-      .extra-item strong {
-        color: var(--text-primary);
-      }
-
-      .extra-item small {
-        color: var(--text-secondary);
-      }
-
-      .extra-remove {
-        border: none;
-        background: transparent;
-        color: var(--accent-error);
-        cursor: pointer;
-        font-size: 0.9rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--radius-sm);
-      }
-
-      .extra-remove:hover {
-        background: rgba(239, 68, 68, 0.12);
-      }
-
-      .extra-empty {
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        text-align: center;
-        padding: 1rem;
-      }
-
-      #itens-container {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-
-      .item-card {
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        background: #fff;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-        box-shadow: var(--shadow-sm);
-      }
-
-      .item-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        grid-column: span 2;
-      }
-
-      .item-actions {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-      }
-
-      .item-status {
-        grid-column: span 2;
-        font-size: 0.9rem;
-        padding: 0.75rem;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-light);
-        background: var(--bg-tertiary);
-      }
-
-      .item-status.ok {
-        background-color: rgba(34, 197, 94, 0.08);
-        color: var(--accent-success);
-        border: 1px solid rgba(34, 197, 94, 0.25);
-      }
-
-      .item-status.erro {
-        background-color: rgba(239, 68, 68, 0.08);
-        color: var(--accent-error);
-        border: 1px solid rgba(239, 68, 68, 0.25);
-      }
-
       .status-pill {
         display: inline-flex;
         align-items: center;
@@ -639,15 +544,64 @@
         border-radius: var(--radius-lg);
         border: 1px solid var(--border-light);
         background: var(--bg-secondary);
-        min-height: 320px;
+        min-height: 190px;
         overflow: hidden;
         position: relative;
         box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
       }
 
       #reader1 {
         width: 100%;
-        height: 100%;
+        max-width: 100%;
+        height: 170px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      #reader1 > div {
+        width: 100% !important;
+        height: 100% !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #reader1 video,
+      #reader1 canvas {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        object-fit: cover;
+      }
+
+      /* Indicador de faixa de leitura */
+      #reader1::after {
+        content: "";
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        top: 50%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.9), transparent);
+        box-shadow:
+          0 0 6px rgba(239, 68, 68, 0.5),
+          0 0 12px rgba(239, 68, 68, 0.35);
+        animation: scanline 1.8s infinite;
+        transform: translateY(-50%);
+        pointer-events: none;
+      }
+
+      @keyframes scanline {
+        0% { transform: translateY(-60%); opacity: 0.9; }
+        50% { transform: translateY(60%); opacity: 0.5; }
+        100% { transform: translateY(-60%); opacity: 0.9; }
       }
 
       #barcode-result {
@@ -818,18 +772,6 @@
         white-space: normal;
       }
 
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1rem;
-      }
-
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-      }
-
       .muted {
         color: var(--text-muted);
       }
@@ -848,9 +790,6 @@
           gap: 1.25rem;
         }
 
-        .item-card {
-          grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr);
-        }
       }
 
       @media (max-width: 900px) {
@@ -898,20 +837,28 @@
         #output {
           -webkit-overflow-scrolling: touch;
         }
+
+        .camera-box {
+          min-height: 160px;
+        }
+
+        #reader1 {
+          height: 140px;
+        }
       }
     </style>
 
   </head>
   <body>
     <div id="version-badge" class="version-badge"></div>
-    <div class="topbar">
-      <div class="brand">
-        <div class="brand-mark">GP</div>
-        <div>
-          <div style="font-size: 0.95rem;">Gestão de Produtos</div>
-          <small class="muted">Dashboard • Visualização e cadastro</small>
+      <div class="topbar">
+        <div class="brand">
+          <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+          <div>
+            <div style="font-size: 0.95rem;">Controle de Validades</div>
+            <small class="muted">Dashboard • Visualização e cadastro</small>
+          </div>
         </div>
-      </div>
       <div class="top-actions">
         <span class="status-pill expiry-green">Online</span>
         <button id="logout-btn" class="btn btn-error btn-sm" type="button">
@@ -924,7 +871,7 @@
       <div class="panel" id="planilha-panel">
         <div class="panel-header">
           <div>
-            <h1>Gestão de Produtos</h1>
+            <h1>Controle de Validades</h1>
             <div class="panel-subtitle">
               Visualize e gerencie a planilha de produtos.
             </div>
@@ -1016,6 +963,9 @@
           <div class="barcode-info">
             <div id="barcode-result"></div>
             <div id="barcode-status"></div>
+            <button id="retry-scan-btn" class="btn btn-secondary btn-sm" type="button">
+              Tentar novamente
+            </button>
           </div>
         </div>
       </div>
@@ -1036,9 +986,14 @@
             Nenhum produto adicionado. Use o leitor para escanear um código.
           </div>
 
-          <button class="btn btn-primary" type="button" id="enviar-todos-btn">
-            Enviar todos os produtos
-          </button>
+          <div class="form-actions">
+            <button class="btn btn-secondary" type="button" id="add-item-btn">
+              Adicionar produto
+            </button>
+            <button class="btn btn-primary" type="button" id="enviar-todos-btn">
+              Enviar todos os produtos
+            </button>
+          </div>
         </form>
 
         <p id="mensagem"></p>
