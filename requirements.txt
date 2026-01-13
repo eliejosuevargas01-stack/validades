@@ -1,3 +1,4 @@
 fastapi
+asyncpg
 httpx
 uvicorn[standard]

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import hashlib
 import json
 import os
 import time
 from typing import Any, Dict, Optional, Set
 
+import asyncpg
 import httpx
 from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,8 +26,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+async def startup() -> None:
+    global db_poll_task
+    if db_configured():
+        await init_db_pool()
+        db_poll_task = asyncio.create_task(poll_db_changes())
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    global db_poll_task, db_pool
+    if db_poll_task is not None:
+        db_poll_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await db_poll_task
+        db_poll_task = None
+    if db_pool is not None:
+        await db_pool.close()
+        db_pool = None
+
 clients: Set[asyncio.Queue] = set()
 NOTIFY_TOKEN = os.getenv("NOTIFY_TOKEN", "").strip()
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+DB_HOST = os.getenv("DB_HOST", "").strip()
+DB_PORT = int(os.getenv("DB_PORT", "5432").strip() or 5432)
+DB_NAME = os.getenv("DB_NAME", "").strip()
+DB_USER = os.getenv("DB_USER", "").strip()
+DB_PASSWORD = os.getenv("DB_PASSWORD", "").strip()
+DB_TABLE = os.getenv("DB_TABLE", "validades").strip() or "validades"
+DB_SSLMODE = os.getenv("DB_SSLMODE", "disable").strip().lower()
+DB_POLL_INTERVAL = float(os.getenv("DB_POLL_INTERVAL", "8").strip() or 8)
+
+db_pool: Optional[asyncpg.Pool] = None
+db_poll_task: Optional[asyncio.Task] = None
 N8N_BASE_URL = os.getenv("N8N_BASE_URL", "https://myn8n.seommerce.shop").strip().rstrip("/")
 N8N_WEBHOOK_PLANILHA = os.getenv(
     "N8N_WEBHOOK_PLANILHA",
@@ -52,7 +89,11 @@ def normalize_payload(payload: Any) -> Dict[str, Any]:
 
 
 def broadcast(payload: Dict[str, Any]) -> int:
-    message = {"type": "update", "ts": time.time(), "payload": payload}
+    message = {
+        "type": "update",
+        "ts": time.time(),
+        "payload": jsonable_encoder(payload),
+    }
     for queue in list(clients):
         queue.put_nowait(message)
     return len(clients)
@@ -69,6 +110,96 @@ def require_notify_token(request: Request) -> None:
         token = request.headers.get("x-notify-token", "").strip()
     if token != NOTIFY_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+def db_configured() -> bool:
+    return bool(DATABASE_URL or DB_HOST)
+
+
+def resolve_table_name(raw_name: str) -> str:
+    parts = [part for part in raw_name.split(".") if part]
+    if not parts:
+        raise HTTPException(status_code=500, detail="DB_TABLE inválida")
+    for part in parts:
+        if not part.replace("_", "").isalnum():
+            raise HTTPException(status_code=500, detail="DB_TABLE inválida")
+    return ".".join(parts)
+
+
+def ssl_enabled() -> bool:
+    return DB_SSLMODE in {"require", "verify-ca", "verify-full", "true", "1"}
+
+
+async def init_db_pool() -> None:
+    global db_pool
+    if db_pool is not None or not db_configured():
+        return
+
+    if DATABASE_URL:
+        db_pool = await asyncpg.create_pool(dsn=DATABASE_URL, ssl=ssl_enabled())
+        return
+
+    if not (DB_HOST and DB_NAME and DB_USER):
+        raise HTTPException(status_code=500, detail="Configuração de banco incompleta")
+
+    db_pool = await asyncpg.create_pool(
+        host=DB_HOST,
+        port=DB_PORT,
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        ssl=ssl_enabled(),
+    )
+
+
+async def fetch_table_rows() -> list[dict]:
+    if db_pool is None:
+        raise HTTPException(status_code=503, detail="Banco de dados indisponível")
+    table_name = resolve_table_name(DB_TABLE)
+    query = f"SELECT * FROM {table_name} ORDER BY 1"
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch(query)
+    return [dict(row) for row in rows]
+
+
+def rows_signature(rows: list[dict]) -> str:
+    payload = json.dumps(rows, sort_keys=True, default=str)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+async def enqueue_snapshot(queue: asyncio.Queue) -> None:
+    if not db_configured():
+        return
+    await init_db_pool()
+    if db_pool is None:
+        return
+    rows = await fetch_table_rows()
+    message = {
+        "type": "snapshot",
+        "ts": time.time(),
+        "payload": {"data": jsonable_encoder(rows)},
+    }
+    queue.put_nowait(message)
+
+
+async def poll_db_changes() -> None:
+    last_signature: Optional[str] = None
+    while True:
+        await asyncio.sleep(DB_POLL_INTERVAL)
+        if not clients:
+            continue
+        try:
+            await init_db_pool()
+            if db_pool is None:
+                continue
+            rows = await fetch_table_rows()
+            signature = rows_signature(rows)
+            if signature == last_signature:
+                continue
+            last_signature = signature
+            broadcast({"data": rows})
+        except Exception:
+            continue
 
 
 async def proxy_webhook(request: Request, url: str) -> Response:
@@ -109,6 +240,10 @@ async def event_stream(queue: asyncio.Queue, request: Request):
 async def events(request: Request):
     queue: asyncio.Queue = asyncio.Queue()
     clients.add(queue)
+    try:
+        await enqueue_snapshot(queue)
+    except Exception:
+        pass
 
     async def generator():
         try:
@@ -155,6 +290,10 @@ async def notify_action(
 
 @app.post("/api/planilha-atualizada")
 async def planilha_atualizada(request: Request):
+    if db_configured():
+        await init_db_pool()
+        rows = await fetch_table_rows()
+        return JSONResponse(jsonable_encoder(rows))
     return await proxy_webhook(request, N8N_WEBHOOK_PLANILHA)
 
 
