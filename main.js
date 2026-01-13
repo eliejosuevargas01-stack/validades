@@ -723,7 +723,9 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
     const handleJsonResponse = async (response) => {
       try {
         const data = await response.clone().json();
-        const { wb, sheetName } = buildWorkbookFromProducts(data);
+        const rows = normalizeJsonRows(data);
+        if (!rows.length) return false;
+        const { wb, sheetName } = buildWorkbookFromProducts(rows);
         workbook = wb;
 
         sheetSelect.innerHTML = "";
@@ -1603,6 +1605,27 @@ function scheduleRealtimeRefresh() {
   }, 250);
 }
 
+function applyRealtimePayload(payload) {
+  const rows = normalizeJsonRows(payload);
+  if (!rows.length) return false;
+
+  const { wb, sheetName } = buildWorkbookFromProducts(rows);
+  workbook = wb;
+
+  sheetSelect.innerHTML = "";
+  const option = document.createElement("option");
+  option.value = sheetName;
+  option.textContent = sheetName;
+  option.selected = true;
+  sheetSelect.appendChild(option);
+  toolbar.style.display = "flex";
+
+  renderSheet(sheetName);
+  if (statusEl) statusEl.textContent = "Planilha atualizada em tempo real.";
+  updateDashboardFromSheet();
+  return true;
+}
+
 function connectRealtime() {
   if (!window.EventSource) {
     setRealtimeStatus(false, "Tempo real: indisponível");
@@ -1618,6 +1641,18 @@ function connectRealtime() {
     });
     source.addEventListener("message", (event) => {
       if (!event?.data) return;
+      let message = null;
+      try {
+        message = JSON.parse(event.data);
+      } catch {
+        scheduleRealtimeRefresh();
+        return;
+      }
+      const payload = message?.payload ?? null;
+      if (payload && applyRealtimePayload(payload)) {
+        setRealtimeStatus(true, "Tempo real: conectado");
+        return;
+      }
       scheduleRealtimeRefresh();
     });
   } catch (err) {
