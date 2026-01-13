@@ -6,9 +6,10 @@ import os
 import time
 from typing import Any, Dict, Optional, Set
 
+import httpx
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Realtime Dashboard Gateway")
@@ -23,6 +24,23 @@ app.add_middleware(
 
 clients: Set[asyncio.Queue] = set()
 NOTIFY_TOKEN = os.getenv("NOTIFY_TOKEN", "").strip()
+N8N_BASE_URL = os.getenv("N8N_BASE_URL", "https://myn8n.seommerce.shop").strip().rstrip("/")
+N8N_WEBHOOK_PLANILHA = os.getenv(
+    "N8N_WEBHOOK_PLANILHA",
+    f"{N8N_BASE_URL}/webhook/planilha-atualizada",
+).strip()
+N8N_WEBHOOK_VALIDADE = os.getenv(
+    "N8N_WEBHOOK_VALIDADE",
+    f"{N8N_BASE_URL}/webhook/validade",
+).strip()
+N8N_WEBHOOK_BARCODE = os.getenv(
+    "N8N_WEBHOOK_BARCODE",
+    f"{N8N_BASE_URL}/webhook/barcode",
+).strip()
+N8N_WEBHOOK_ACOES = os.getenv(
+    "N8N_WEBHOOK_ACOES",
+    f"{N8N_BASE_URL}/webhook/a%C3%A7%C3%B5es",
+).strip()
 
 
 def normalize_payload(payload: Any) -> Dict[str, Any]:
@@ -51,6 +69,28 @@ def require_notify_token(request: Request) -> None:
         token = request.headers.get("x-notify-token", "").strip()
     if token != NOTIFY_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+async def proxy_webhook(request: Request, url: str) -> Response:
+    body = await request.body()
+    headers = {}
+    content_type = request.headers.get("content-type")
+    if content_type:
+        headers["content-type"] = content_type
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(url, content=body, headers=headers)
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=502, detail="Upstream request failed") from exc
+
+    response_headers = {}
+    response_content_type = resp.headers.get("content-type")
+    if response_content_type:
+        response_headers["content-type"] = response_content_type
+    content_disposition = resp.headers.get("content-disposition")
+    if content_disposition:
+        response_headers["content-disposition"] = content_disposition
+    return Response(content=resp.content, status_code=resp.status_code, headers=response_headers)
 
 
 async def event_stream(queue: asyncio.Queue, request: Request):
@@ -111,6 +151,26 @@ async def notify_action(
     data.setdefault("action", action)
     clients_count = broadcast(data)
     return JSONResponse({"ok": True, "clients": clients_count})
+
+
+@app.post("/api/planilha-atualizada")
+async def planilha_atualizada(request: Request):
+    return await proxy_webhook(request, N8N_WEBHOOK_PLANILHA)
+
+
+@app.post("/api/validade")
+async def validade(request: Request):
+    return await proxy_webhook(request, N8N_WEBHOOK_VALIDADE)
+
+
+@app.post("/api/barcode")
+async def barcode(request: Request):
+    return await proxy_webhook(request, N8N_WEBHOOK_BARCODE)
+
+
+@app.post("/api/acoes")
+async def acoes(request: Request):
+    return await proxy_webhook(request, N8N_WEBHOOK_ACOES)
 
 
 @app.get("/health")

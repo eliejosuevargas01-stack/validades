@@ -208,7 +208,9 @@ const PROD_ENDPOINTS = {
         "/api/barcode",
         "https://myn8n.seommerce.shop/webhook/barcode",
       ],
-  actions: ["https://myn8n.seommerce.shop/webhook/a%C3%A7%C3%B5es"],
+  actions: preferExternal
+    ? ["https://myn8n.seommerce.shop/webhook/a%C3%A7%C3%B5es", "/api/acoes"]
+    : ["/api/acoes", "https://myn8n.seommerce.shop/webhook/a%C3%A7%C3%B5es"],
 };
 
 const TEST_ENDPOINTS = {
