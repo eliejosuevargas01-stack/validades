@@ -36,11 +36,35 @@ const editHint = document.getElementById("edit-hint");
 const bulkActions = document.getElementById("bulk-actions");
 const bulkCount = document.getElementById("bulk-count");
 const bulkLaunchBtn = document.getElementById("bulk-launch-btn");
+const bulkSoldBtn = document.getElementById("bulk-sold-btn");
+const bulkRemovedBtn = document.getElementById("bulk-removed-btn");
 const bulkEditBtn = document.getElementById("bulk-edit-btn");
 const bulkDeleteBtn = document.getElementById("bulk-delete-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const envSelect = document.getElementById("env-select");
 const testWebhooksBtn = document.getElementById("test-webhooks-btn");
+const realtimeStatus = document.getElementById("realtime-status");
+const refreshDashboardBtn = document.getElementById("refresh-dashboard-btn");
+const metricTotal = document.getElementById("metric-total");
+const metricExpired = document.getElementById("metric-expired");
+const metricDue7 = document.getElementById("metric-due7");
+const metricLaunched = document.getElementById("metric-launched");
+const metricNotLaunched = document.getElementById("metric-not-launched");
+const metricExpiredRate = document.getElementById("metric-expired-rate");
+const expiryChartCanvas = document.getElementById("chart-expiry");
+const launchChartCanvas = document.getElementById("chart-launch");
+const bucketsChartCanvas = document.getElementById("chart-buckets");
+const expiryList = document.getElementById("expiry-list");
+const expiryUpdated = document.getElementById("expiry-updated");
+const expiryCount = document.getElementById("expiry-count");
+const detailModal = document.getElementById("detail-modal");
+const detailTitle = document.getElementById("detail-title");
+const detailSubtitle = document.getElementById("detail-subtitle");
+const detailMeta = document.getElementById("detail-meta");
+const detailList = document.getElementById("detail-list");
+const detailCloseBtn = document.getElementById("detail-close-btn");
+const metricCards = document.querySelectorAll(".metric-card[data-metric]");
+const categoryFilter = document.getElementById("category-filter");
 const ENV_KEY = "gp_env";
 let currentEnv = localStorage.getItem(ENV_KEY) === "test" ? "test" : "prod";
 
@@ -78,6 +102,15 @@ let currentEditTargets = [];
 let workbook = null;
 const versionBadge = document.getElementById("version-badge");
 const BASE_VERSION = "1.3.9";
+const EXPIRY_WINDOW_DAYS = 30;
+const EXPIRY_PAST_DAYS = 30;
+const EXPIRY_NEAR_DAYS = 7;
+const MAX_EXPIRY_ITEMS = 18;
+const MAX_DETAIL_ITEMS = 200;
+const CATEGORY_FILTER_KEY = "gp_category_filter";
+const CATEGORY_ALL_VALUE = "__all__";
+let selectedCategory =
+  localStorage.getItem(CATEGORY_FILTER_KEY) || CATEGORY_ALL_VALUE;
 
 function setVersionBadge(versionText = BASE_VERSION) {
   if (versionBadge) {
@@ -91,6 +124,12 @@ const AUTH_KEY = "gp_auth";
 const USER_KEY = "gp_user";
 const isAuthenticated = localStorage.getItem(AUTH_KEY) === "1";
 const currentUserEmail = localStorage.getItem(USER_KEY) || "";
+
+let expiryChart = null;
+let launchChart = null;
+let bucketsChart = null;
+let realtimeRefreshTimer = null;
+let isRefreshing = false;
 
 if (!isAuthenticated || !currentUserEmail) {
   localStorage.removeItem(AUTH_KEY);
@@ -240,11 +279,14 @@ async function testWebhooks() {
 const PRODUCT_HEADERS = [
   "id",
   "nome",
+  "categoria",
   "validade",
   "quantidade",
   "ean",
   "troca",
   "lancado",
+  "vendido",
+  "retirado",
   "data_lancado",
   "rotatividade_alta",
   "adicionado_em",
@@ -301,11 +343,14 @@ function normalizeProductEntry(entry = {}) {
   return {
     id: entry.id ?? "",
     nome: entry.nome ?? entry.name ?? "",
+    categoria: entry.categoria ?? entry.category ?? entry.categoria_produto ?? "",
     validade: entry.validade ?? entry.vencimento ?? "",
     quantidade: entry.quantidade ?? entry.qtd ?? "",
     ean: entry.ean ?? entry.codigo ?? "",
     troca: toBoolean(entry.troca, false),
     lancado: toBoolean(entry.lancado ?? entry["lançado"], false),
+    vendido: toBoolean(entry.vendido, false),
+    retirado: toBoolean(entry.retirado, false),
     rotatividade_alta: toBoolean(entry.rotatividade_alta ?? entry.rotatividade, false),
     data_lancado: entry.data_lancado ?? entry.dataLancado ?? "",
     adicionado_em: entry.adicionado_em ?? entry.criado_em ?? "",
@@ -586,16 +631,86 @@ function initBarcodeUI() {
 
 initBarcodeUI();
 
-fetchBtn.addEventListener("click", async () => {
+if (detailCloseBtn) {
+  detailCloseBtn.addEventListener("click", closeDetailModal);
+}
+
+if (detailModal) {
+  detailModal.addEventListener("click", (event) => {
+    if (event.target === detailModal) closeDetailModal();
+  });
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeDetailModal();
+});
+
+if (categoryFilter) {
+  categoryFilter.addEventListener("change", () => {
+    selectedCategory = categoryFilter.value || CATEGORY_ALL_VALUE;
+    localStorage.setItem(CATEGORY_FILTER_KEY, selectedCategory);
+    if (workbook) {
+      renderSheet(sheetSelect.value || workbook.SheetNames[0]);
+    } else {
+      updateDashboardFromSheet();
+    }
+  });
+}
+
+if (metricCards && metricCards.length) {
+  metricCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const metric = card.dataset.metric || "";
+      switch (metric) {
+        case "total":
+          showDetailsForKey("total", "Todos os produtos", "Lista completa da planilha.");
+          break;
+        case "expired":
+          showDetailsForKey("expired", "Produtos vencidos", "Itens com validade expirada.");
+          break;
+        case "due7":
+          showDetailsForKey(
+            "due7",
+            "Vencem em até 7 dias",
+            "Produtos com vencimento entre 0 e 7 dias."
+          );
+          break;
+        case "launched":
+          showDetailsForKey("launched", "Produtos lançados", "Itens marcados como lançados.");
+          break;
+        case "not-launched":
+          showDetailsForKey(
+            "not-launched",
+            "Produtos não lançados",
+            "Itens ainda não lançados."
+          );
+          break;
+        case "expired-rate":
+          showDetailsForKey("expired", "Produtos vencidos", "Itens com validade expirada.");
+          break;
+        default:
+          break;
+      }
+    });
+  });
+}
+
+async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
   if (!isAuthenticated) {
     window.location.href = "login.html";
     return;
   }
+  if (isRefreshing) return;
+  isRefreshing = true;
   clearSelections();
   renderedRowMap = new Map();
   updateBulkActionsUI();
   output.innerHTML = "";
-  statusEl.textContent = "Carregando planilha do servidor...";
+  if (!silent && statusEl) {
+    statusEl.textContent = "Carregando planilha do servidor...";
+  } else if (statusEl && reason === "realtime") {
+    statusEl.textContent = "Atualizando dados em tempo real...";
+  }
 
   try {
     const res = await postJsonWithFallback(getEndpoints("planilha"), {
@@ -618,6 +733,7 @@ fetchBtn.addEventListener("click", async () => {
         toolbar.style.display = "flex";
         renderSheet(sheetName);
         statusEl.textContent = "Planilha carregada com sucesso.";
+        updateDashboardFromSheet();
         return true;
       } catch (err) {
         return false;
@@ -654,11 +770,26 @@ fetchBtn.addEventListener("click", async () => {
     toolbar.style.display = workbook.SheetNames.length ? "flex" : "none";
     renderSheet(workbook.SheetNames[0]);
     statusEl.textContent = "Planilha carregada com sucesso.";
+    updateDashboardFromSheet();
   } catch (err) {
     console.error(err);
     statusEl.textContent = `Erro ao buscar planilha: ${err.message}`;
+  } finally {
+    isRefreshing = false;
   }
+}
+
+fetchBtn.addEventListener("click", () => {
+  loadPlanilhaFromServer({ silent: false, reason: "manual" });
 });
+
+if (refreshDashboardBtn) {
+  refreshDashboardBtn.addEventListener("click", () => {
+    loadPlanilhaFromServer({ silent: false, reason: "manual" });
+  });
+}
+
+connectRealtime();
 
 sheetSelect.addEventListener("change", () => {
   if (!workbook) return;
@@ -830,6 +961,666 @@ function getLancadoMeta(value) {
   return isTrue
     ? { text: "Lançado", color: "lancado-true" }
     : { text: "Não lançado", color: "lancado-false" };
+}
+
+function getExpiryDays(value) {
+  const parsed = tryParseDate(value);
+  if (!parsed?.date) return null;
+  const diffMs = parsed.date.getTime() - Date.now();
+  return Math.floor(diffMs / (24 * 3600 * 1000));
+}
+
+function isRowEmpty(row) {
+  if (!row) return true;
+  return row.every(
+    (cell) => cell === "" || cell === null || cell === undefined
+  );
+}
+
+function initCharts() {
+  if (!window.Chart) return;
+  if (expiryChart || launchChart || bucketsChart) return;
+
+  if (expiryChartCanvas) {
+    expiryChart = new Chart(expiryChartCanvas, {
+      type: "doughnut",
+      data: {
+        labels: ["Vencidos", "Em dia"],
+        datasets: [
+          {
+            data: [0, 0],
+            backgroundColor: ["#ef4444", "#22c55e"],
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { position: "bottom" },
+        },
+        onClick: (evt, elements) => {
+          if (!elements.length) return;
+          const index = elements[0].index;
+          if (index === 0) {
+            showDetailsForKey(
+              "expired",
+              "Produtos vencidos",
+              "Itens com validade expirada."
+            );
+          } else {
+            showDetailsForKey(
+              "up-to-date",
+              "Produtos em dia",
+              "Itens com validade ainda ativa."
+            );
+          }
+        },
+        onHover: (evt, elements) => {
+          const target = evt?.native?.target;
+          if (target) target.style.cursor = elements.length ? "pointer" : "default";
+        },
+      },
+    });
+  }
+
+  if (launchChartCanvas) {
+    launchChart = new Chart(launchChartCanvas, {
+      type: "pie",
+      data: {
+        labels: ["Lançados", "Não lançados"],
+        datasets: [
+          {
+            data: [0, 0],
+            backgroundColor: ["#0ea5e9", "#94a3b8"],
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { position: "bottom" },
+        },
+        onClick: (evt, elements) => {
+          if (!elements.length) return;
+          const index = elements[0].index;
+          if (index === 0) {
+            showDetailsForKey(
+              "launched",
+              "Produtos lançados",
+              "Itens marcados como lançados."
+            );
+          } else {
+            showDetailsForKey(
+              "not-launched",
+              "Produtos não lançados",
+              "Itens ainda não lançados."
+            );
+          }
+        },
+        onHover: (evt, elements) => {
+          const target = evt?.native?.target;
+          if (target) target.style.cursor = elements.length ? "pointer" : "default";
+        },
+      },
+    });
+  }
+
+  if (bucketsChartCanvas) {
+    bucketsChart = new Chart(bucketsChartCanvas, {
+      type: "bar",
+      data: {
+        labels: ["Vencidos", "0-7 dias", "8-30 dias", "30+ dias"],
+        datasets: [
+          {
+            label: "Produtos",
+            data: [0, 0, 0, 0],
+            backgroundColor: ["#ef4444", "#f97316", "#fbbf24", "#22c55e"],
+            borderRadius: 8,
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true },
+        },
+        onClick: (evt, elements) => {
+          if (!elements.length) return;
+          const index = elements[0].index;
+          if (index === 0) {
+            showDetailsForKey(
+              "expired",
+              "Produtos vencidos",
+              "Itens com validade expirada."
+            );
+          } else if (index === 1) {
+            showDetailsForKey(
+              "due7",
+              "Vencem em 0-7 dias",
+              "Produtos com vencimento entre 0 e 7 dias."
+            );
+          } else if (index === 2) {
+            showDetailsForKey(
+              "due30",
+              "Vencem em 8-30 dias",
+              "Produtos com vencimento entre 8 e 30 dias."
+            );
+          } else if (index === 3) {
+            showDetailsForKey(
+              "ok30",
+              "Vencem em 30+ dias",
+              "Produtos com vencimento acima de 30 dias."
+            );
+          }
+        },
+        onHover: (evt, elements) => {
+          const target = evt?.native?.target;
+          if (target) target.style.cursor = elements.length ? "pointer" : "default";
+        },
+      },
+    });
+  }
+}
+
+function renderExpiryList(items) {
+  if (!expiryList) return;
+  expiryList.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "expiry-empty";
+    empty.textContent = "Nenhum produto crítico no período.";
+    expiryList.appendChild(empty);
+    return;
+  }
+
+  items.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = `expiry-item ${item.color || ""}`.trim();
+    if (item.payload) {
+      card.classList.add("is-clickable");
+      card.addEventListener("click", () => {
+        openDetailModal({
+          title: item.nome || "Detalhes do produto",
+          subtitle: item.tag || "",
+          items: [item.payload],
+        });
+      });
+    }
+
+    const top = document.createElement("div");
+    top.className = "expiry-item-top";
+    const name = document.createElement("div");
+    name.className = "expiry-name";
+    name.textContent = item.nome || "Produto sem nome";
+    const tag = document.createElement("div");
+    tag.className = "expiry-tag";
+    tag.textContent = item.tag || "Vencimento";
+    top.appendChild(name);
+    top.appendChild(tag);
+
+    const date = document.createElement("div");
+    date.className = "expiry-date";
+    const prefix = item.days < 0 ? "Venceu em" : "Vence em";
+    date.textContent = `${prefix} ${item.validade || "--"}`;
+
+    const chips = document.createElement("div");
+    chips.className = "expiry-chips";
+    const addChip = (text) => {
+      const chip = document.createElement("span");
+      chip.className = "expiry-chip";
+      chip.textContent = text;
+      chips.appendChild(chip);
+    };
+    if (item.categoria) addChip(`Categoria: ${item.categoria}`);
+    if (item.quantidade !== "" && item.quantidade !== null && item.quantidade !== undefined) {
+      addChip(`Qtd: ${item.quantidade}`);
+    }
+    if (item.ean) addChip(`EAN: ${item.ean}`);
+
+    card.appendChild(top);
+    card.appendChild(date);
+    if (chips.childElementCount) {
+      card.appendChild(chips);
+    }
+
+    expiryList.appendChild(card);
+  });
+}
+
+function closeDetailModal() {
+  if (!detailModal) return;
+  detailModal.style.display = "none";
+}
+
+function sortProductsForDetail(items) {
+  return items.slice().sort((a, b) => {
+    const aDays = getExpiryDays(a.validade);
+    const bDays = getExpiryDays(b.validade);
+    if (aDays === null && bDays === null) {
+      return (a.nome || "").localeCompare(b.nome || "");
+    }
+    if (aDays === null) return 1;
+    if (bDays === null) return -1;
+    if (aDays !== bDays) return aDays - bDays;
+    return (a.nome || "").localeCompare(b.nome || "");
+  });
+}
+
+function renderDetailList(items) {
+  if (!detailList) return;
+  detailList.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "detail-empty";
+    empty.textContent = "Nenhum item encontrado.";
+    detailList.appendChild(empty);
+    return;
+  }
+
+  items.forEach((product) => {
+    const card = document.createElement("div");
+    const meta = getExpiryMeta(product.validade);
+    const colorClass = meta?.color || "";
+    card.className = `detail-item ${colorClass}`.trim();
+
+    const top = document.createElement("div");
+    top.className = "detail-item-top";
+    const name = document.createElement("div");
+    name.className = "detail-item-name";
+    const displayName = product.nome || (product.ean ? `EAN ${product.ean}` : "Produto sem nome");
+    name.textContent = displayName;
+
+    const badge = document.createElement("span");
+    badge.className = "detail-badge";
+    if (meta) {
+      badge.textContent = meta.tag;
+      badge.classList.add(meta.color);
+    } else {
+      const lancado = toBoolean(product.lancado, false);
+      badge.textContent = lancado ? "Lançado" : "Não lançado";
+      badge.classList.add(lancado ? "lancado-true" : "lancado-false");
+    }
+
+    top.appendChild(name);
+    top.appendChild(badge);
+
+    const date = document.createElement("div");
+    date.className = "detail-item-date";
+    const validadeLabel = product.validade
+      ? formatCellValue(product.validade)
+      : "--";
+    date.textContent = `Validade: ${validadeLabel}`;
+
+    const tags = document.createElement("div");
+    tags.className = "detail-tags";
+    const addTag = (text) => {
+      const tag = document.createElement("span");
+      tag.className = "detail-tag";
+      tag.textContent = text;
+      tags.appendChild(tag);
+    };
+    if (product.categoria) addTag(`Categoria: ${product.categoria}`);
+    if (product.quantidade !== "" && product.quantidade !== null && product.quantidade !== undefined) {
+      addTag(`Qtd: ${product.quantidade}`);
+    }
+    if (product.ean) addTag(`EAN: ${product.ean}`);
+    addTag(`Troca: ${booleanLabel(product.troca, false)}`);
+    addTag(`Rotatividade: ${booleanLabel(product.rotatividade_alta, false)}`);
+    addTag(`Lançado: ${booleanLabel(product.lancado, false)}`);
+
+    const actions = document.createElement("div");
+    actions.className = "detail-actions";
+    const makeBtn = (label, className, handler) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `btn btn-xs ${className}`;
+      btn.textContent = label;
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        handler();
+      });
+      return btn;
+    };
+    actions.appendChild(
+      makeBtn("Editar", "btn-secondary", () => openEditModal(product))
+    );
+    actions.appendChild(
+      makeBtn("Lançar", "btn-success", () => launchTargets([product]))
+    );
+    actions.appendChild(
+      makeBtn("Vendido", "btn-success", () => markSoldTargets([product]))
+    );
+    actions.appendChild(
+      makeBtn("Retirado", "btn-secondary", () => markRemovedTargets([product]))
+    );
+    actions.appendChild(
+      makeBtn("Eliminar", "btn-error", () => deleteTargets([product]))
+    );
+
+    card.appendChild(top);
+    card.appendChild(date);
+    card.appendChild(tags);
+    card.appendChild(actions);
+
+    detailList.appendChild(card);
+  });
+}
+
+function openDetailModal({ title, subtitle = "", items = [] }) {
+  if (!detailModal) return;
+  if (detailTitle) detailTitle.textContent = title || "Detalhes";
+  if (detailSubtitle) detailSubtitle.textContent = subtitle;
+  const sorted = sortProductsForDetail(items);
+  const visible = sorted.slice(0, MAX_DETAIL_ITEMS);
+  if (detailMeta) {
+    detailMeta.textContent =
+      items.length > visible.length
+        ? `Mostrando ${visible.length} de ${items.length} itens`
+        : `${items.length} item(s)`;
+  }
+  renderDetailList(visible);
+  detailModal.style.display = "flex";
+}
+
+function getProductsFromSheet() {
+  const current = getCurrentSheet();
+  if (!current) return [];
+  const rows = XLSX.utils.sheet_to_json(current.sheet, {
+    header: 1,
+    defval: "",
+  });
+  if (!rows.length) return [];
+  const headerRow = rows[0] || [];
+  const dataRows = rows.slice(1);
+  const headerLower = headerRow.map((cell) =>
+    String(cell || "").trim().toLowerCase()
+  );
+  const categoriaIdx = headerLower.findIndex(
+    (h) => h === "categoria" || h === "categoria_produto" || h === "categoria produto"
+  );
+  const items = [];
+  dataRows.forEach((row) => {
+    if (isRowEmpty(row)) return;
+    if (
+      selectedCategory !== CATEGORY_ALL_VALUE &&
+      categoriaIdx !== -1 &&
+      !categoryMatches(row[categoriaIdx])
+    ) {
+      return;
+    }
+    const payload = buildPayloadFromRow(headerRow, row);
+    if (!payload) return;
+    items.push(payload);
+  });
+  return items;
+}
+
+function isProductSold(product) {
+  return toBoolean(product?.vendido, false);
+}
+
+function isProductRemoved(product) {
+  return toBoolean(product?.retirado, false);
+}
+
+function getProductDays(product) {
+  return getExpiryDays(product?.validade);
+}
+
+function filterProductsByKey(products, key) {
+  const normalizedKey = key || "";
+  switch (normalizedKey) {
+    case "expired":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return (
+          days !== null &&
+          days < 0 &&
+          !isProductRemoved(p) &&
+          !isProductSold(p)
+        );
+      });
+    case "due7":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return days !== null && days >= 0 && days <= 7 && !isProductSold(p);
+      });
+    case "due30":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return days !== null && days >= 8 && days <= 30 && !isProductSold(p);
+      });
+    case "ok30":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return days !== null && days > 30 && !isProductSold(p);
+      });
+    case "up-to-date":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return days !== null && days >= 0 && !isProductSold(p);
+      });
+    case "launched":
+      return products.filter((p) => toBoolean(p.lancado, false));
+    case "not-launched":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return (
+          !toBoolean(p.lancado, false) &&
+          !isProductSold(p) &&
+          (days === null || days >= 0)
+        );
+      });
+    case "total":
+    default:
+      return products;
+  }
+}
+
+function showDetailsForKey(key, title, subtitle) {
+  const products = getProductsFromSheet();
+  const filtered = filterProductsByKey(products, key);
+  openDetailModal({ title, subtitle, items: filtered });
+}
+
+function updateDashboardFromSheet() {
+  const current = getCurrentSheet();
+  if (!current) return;
+  const rows = XLSX.utils.sheet_to_json(current.sheet, {
+    header: 1,
+    defval: "",
+  });
+  if (!rows.length) return;
+
+  const headerRow = rows[0] || [];
+  const dataRows = rows.slice(1);
+  const headerLower = headerRow.map((cell) =>
+    String(cell || "").trim().toLowerCase()
+  );
+  const validadeIdx = headerLower.findIndex(
+    (h) => h === "validade" || h === "vencimento" || h === "data"
+  );
+  const lancadoIdx = headerLower.findIndex(
+    (h) => h === "lançado" || h === "lancado"
+  );
+  const vendidoIdx = headerLower.findIndex((h) => h === "vendido");
+  const retiradoIdx = headerLower.findIndex((h) => h === "retirado");
+  const nomeIdx = headerLower.findIndex(
+    (h) => h === "nome" || h === "produto"
+  );
+  const categoriaIdx = headerLower.findIndex(
+    (h) => h === "categoria" || h === "categoria_produto" || h === "categoria produto"
+  );
+  const quantidadeIdx = headerLower.findIndex(
+    (h) => h === "quantidade" || h === "qtd"
+  );
+  const eanIdx = headerLower.findIndex((h) => h === "ean");
+
+  let total = 0;
+  let expired = 0;
+  let due7 = 0;
+  let due30 = 0;
+  let ok30 = 0;
+  let launched = 0;
+  let notLaunched = 0;
+  const expiryItems = [];
+
+  dataRows.forEach((row) => {
+    if (isRowEmpty(row)) return;
+    if (
+      selectedCategory !== CATEGORY_ALL_VALUE &&
+      categoriaIdx !== -1 &&
+      !categoryMatches(row[categoriaIdx])
+    ) {
+      return;
+    }
+    total += 1;
+    const vendido = vendidoIdx !== -1 && toBoolean(row[vendidoIdx], false);
+    const retirado = retiradoIdx !== -1 && toBoolean(row[retiradoIdx], false);
+    const lancado = lancadoIdx !== -1 && toBoolean(row[lancadoIdx], false);
+
+    let days = null;
+    if (validadeIdx !== -1) {
+      days = getExpiryDays(row[validadeIdx]);
+      if (days !== null) {
+        if (days < 0) {
+          if (!retirado && !vendido) {
+            expired += 1;
+          }
+        } else if (!vendido) {
+          if (days <= 7) {
+            due7 += 1;
+          } else if (days <= 30) {
+            due30 += 1;
+          } else {
+            ok30 += 1;
+          }
+        }
+      }
+    }
+
+    if (days !== null) {
+      const includeExpiry =
+        days <= EXPIRY_WINDOW_DAYS &&
+        days >= -EXPIRY_PAST_DAYS &&
+        !vendido &&
+        !(retirado && days < 0);
+      if (includeExpiry) {
+        const meta = getExpiryMeta(row[validadeIdx]);
+        if (meta) {
+          const nome = nomeIdx !== -1 ? String(row[nomeIdx] || "").trim() : "";
+          const categoria =
+            categoriaIdx !== -1 ? String(row[categoriaIdx] || "").trim() : "";
+          const quantidade = quantidadeIdx !== -1 ? row[quantidadeIdx] : "";
+          const ean = eanIdx !== -1 ? String(row[eanIdx] || "").trim() : "";
+          const payload = buildPayloadFromRow(headerRow, row);
+          expiryItems.push({
+            nome: nome || (ean ? `EAN ${ean}` : "Produto sem nome"),
+            categoria,
+            quantidade,
+            validade: formatCellValue(row[validadeIdx]),
+            tag: meta.tag,
+            color: meta.color,
+            days,
+            ean,
+            lancado,
+            payload: payload || null,
+          });
+        }
+      }
+    }
+
+    if (lancado) {
+      launched += 1;
+    } else if (!vendido && (days === null || days >= 0)) {
+      notLaunched += 1;
+    }
+  });
+
+  if (metricTotal) metricTotal.textContent = String(total);
+  if (metricExpired) metricExpired.textContent = String(expired);
+  if (metricDue7) metricDue7.textContent = String(due7);
+  if (metricLaunched) metricLaunched.textContent = String(launched);
+  if (metricNotLaunched) metricNotLaunched.textContent = String(notLaunched);
+
+  const expiredRate = total ? Math.round((expired / total) * 100) : 0;
+  if (metricExpiredRate) metricExpiredRate.textContent = `${expiredRate}%`;
+
+  const sortedExpiry = expiryItems
+    .slice()
+    .sort((a, b) => {
+      const aNear = a.days <= EXPIRY_NEAR_DAYS;
+      const bNear = b.days <= EXPIRY_NEAR_DAYS;
+      const aGroup = !a.lancado && aNear ? 0 : a.lancado && aNear ? 1 : !a.lancado ? 2 : 3;
+      const bGroup = !b.lancado && bNear ? 0 : b.lancado && bNear ? 1 : !b.lancado ? 2 : 3;
+      if (aGroup !== bGroup) return aGroup - bGroup;
+      if (a.days !== b.days) return a.days - b.days;
+      return String(a.nome || "").localeCompare(String(b.nome || ""));
+    });
+  const visibleExpiry = sortedExpiry.slice(0, MAX_EXPIRY_ITEMS);
+  renderExpiryList(visibleExpiry);
+  if (expiryCount) {
+    if (!expiryItems.length) {
+      expiryCount.textContent = "Nenhum item crítico";
+    } else if (expiryItems.length > visibleExpiry.length) {
+      expiryCount.textContent = `Mostrando ${visibleExpiry.length} de ${expiryItems.length} itens`;
+    } else {
+      expiryCount.textContent = `${expiryItems.length} item(s) críticos`;
+    }
+  }
+  if (expiryUpdated) {
+    expiryUpdated.textContent = `Atualizado às ${brDateTimeFormatter.format(new Date())}`;
+  }
+
+  initCharts();
+  if (expiryChart) {
+    expiryChart.data.datasets[0].data = [expired, Math.max(total - expired, 0)];
+    expiryChart.update();
+  }
+  if (launchChart) {
+    launchChart.data.datasets[0].data = [launched, notLaunched];
+    launchChart.update();
+  }
+  if (bucketsChart) {
+    bucketsChart.data.datasets[0].data = [expired, due7, due30, ok30];
+    bucketsChart.update();
+  }
+}
+
+function setRealtimeStatus(connected, message) {
+  if (!realtimeStatus) return;
+  realtimeStatus.textContent = message;
+  realtimeStatus.classList.toggle("offline", !connected);
+}
+
+function scheduleRealtimeRefresh() {
+  if (realtimeRefreshTimer) return;
+  realtimeRefreshTimer = window.setTimeout(() => {
+    realtimeRefreshTimer = null;
+    loadPlanilhaFromServer({ silent: true, reason: "realtime" });
+  }, 250);
+}
+
+function connectRealtime() {
+  if (!window.EventSource) {
+    setRealtimeStatus(false, "Tempo real: indisponível");
+    return;
+  }
+  try {
+    const source = new EventSource("/events");
+    source.addEventListener("open", () => {
+      setRealtimeStatus(true, "Tempo real: conectado");
+    });
+    source.addEventListener("error", () => {
+      setRealtimeStatus(false, "Tempo real: reconectando...");
+    });
+    source.addEventListener("message", (event) => {
+      if (!event?.data) return;
+      scheduleRealtimeRefresh();
+    });
+  } catch (err) {
+    setRealtimeStatus(false, "Tempo real: erro ao conectar");
+  }
 }
 
 function columnLetter(index) {
@@ -1099,6 +1890,8 @@ function updateBulkActionsUI() {
       : "Nenhum produto selecionado.";
   }
   if (bulkLaunchBtn) bulkLaunchBtn.disabled = count === 0;
+  if (bulkSoldBtn) bulkSoldBtn.disabled = count === 0;
+  if (bulkRemovedBtn) bulkRemovedBtn.disabled = count === 0;
   if (bulkEditBtn) bulkEditBtn.disabled = count === 0;
   if (bulkDeleteBtn) bulkDeleteBtn.disabled = count === 0;
   if (selectAllCheckboxEl) {
@@ -1117,7 +1910,7 @@ function getSelectedPayloads() {
 }
 
 function setBulkButtonsDisabled(disabled) {
-  [bulkLaunchBtn, bulkEditBtn, bulkDeleteBtn].forEach((btn) => {
+  [bulkLaunchBtn, bulkSoldBtn, bulkRemovedBtn, bulkEditBtn, bulkDeleteBtn].forEach((btn) => {
     if (btn) btn.disabled = disabled || selectedRowKeys.size === 0;
   });
 }
@@ -1150,6 +1943,80 @@ async function launchTargets(targets) {
     if (fetchBtn) fetchBtn.click();
   } catch (err) {
     statusEl.textContent = `Erro ao lançar produtos: ${err.message || err}`;
+  } finally {
+    setBulkButtonsDisabled(false);
+  }
+}
+
+async function markSoldTargets(targets) {
+  const list = (targets || []).filter(Boolean);
+  if (!list.length) {
+    statusEl.textContent = "Selecione ao menos um produto para marcar como vendido.";
+    return;
+  }
+  setBulkButtonsDisabled(true);
+  statusEl.textContent = `Marcando ${list.length} produto(s) como vendido...`;
+  try {
+    let sent = 0;
+    for (const payload of list) {
+      const idVal = payload?.id || payload?.ean || "";
+      if (!idVal) continue;
+      await postJsonWithFallback(getEndpoints("actions"), {
+        action: "vendido",
+        vendido: true,
+        id: idVal,
+        ean: payload?.ean || "",
+        nome: payload?.nome || "",
+        quantidade: payload?.quantidade ?? payload?.quantidade_text ?? "",
+        categoria: payload?.categoria ?? "",
+        ...getUserPayload(),
+      });
+      sent += 1;
+    }
+    statusEl.textContent = sent
+      ? "Produtos marcados como vendidos."
+      : "Nenhum produto válido para marcar como vendido.";
+    clearSelections();
+    if (fetchBtn) fetchBtn.click();
+  } catch (err) {
+    statusEl.textContent = `Erro ao marcar como vendido: ${err.message || err}`;
+  } finally {
+    setBulkButtonsDisabled(false);
+  }
+}
+
+async function markRemovedTargets(targets) {
+  const list = (targets || []).filter(Boolean);
+  if (!list.length) {
+    statusEl.textContent = "Selecione ao menos um produto para marcar como retirado.";
+    return;
+  }
+  setBulkButtonsDisabled(true);
+  statusEl.textContent = `Marcando ${list.length} produto(s) como retirado...`;
+  try {
+    let sent = 0;
+    for (const payload of list) {
+      const idVal = payload?.id || payload?.ean || "";
+      if (!idVal) continue;
+      await postJsonWithFallback(getEndpoints("actions"), {
+        action: "retirado",
+        retirado: true,
+        id: idVal,
+        ean: payload?.ean || "",
+        nome: payload?.nome || "",
+        quantidade: payload?.quantidade ?? payload?.quantidade_text ?? "",
+        categoria: payload?.categoria ?? "",
+        ...getUserPayload(),
+      });
+      sent += 1;
+    }
+    statusEl.textContent = sent
+      ? "Produtos marcados como retirados."
+      : "Nenhum produto válido para marcar como retirado.";
+    clearSelections();
+    if (fetchBtn) fetchBtn.click();
+  } catch (err) {
+    statusEl.textContent = `Erro ao marcar como retirado: ${err.message || err}`;
   } finally {
     setBulkButtonsDisabled(false);
   }
@@ -1203,6 +2070,7 @@ function normalizeHeaderLabel(label, fallback) {
   const map = {
     id: "ID",
     nome: "NOME",
+    categoria: "CATEGORIA",
     validade: "VALIDADE",
     vencimento: "VALIDADE",
     quantidade: "QUANTIDADE",
@@ -1212,6 +2080,8 @@ function normalizeHeaderLabel(label, fallback) {
     lancado: "LANCADO",
     lancado_: "LANCADO",
     lanado: "LANCADO",
+    vendido: "VENDIDO",
+    retirado: "RETIRADO",
     "data_lancado": "DATA_LANCADO",
     "data_lancamento": "DATA_LANCADO",
     datalancado: "DATA_LANCADO",
@@ -1225,6 +2095,83 @@ function normalizeHeaderLabel(label, fallback) {
   };
   if (map[normalized]) return map[normalized];
   return raw.toUpperCase();
+}
+
+function normalizeCategory(value) {
+  return String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function categoryMatches(value) {
+  if (selectedCategory === CATEGORY_ALL_VALUE) return true;
+  return normalizeCategory(value) === normalizeCategory(selectedCategory);
+}
+
+function buildCategoryOptions(headerRowValues, dataRows) {
+  const headerLower = (headerRowValues || []).map((cell) =>
+    String(cell || "").trim().toLowerCase()
+  );
+  const categoriaIdx = headerLower.findIndex(
+    (h) => h === "categoria" || h === "categoria_produto" || h === "categoria produto"
+  );
+  const categoriesMap = new Map();
+  if (categoriaIdx !== -1) {
+    (dataRows || []).forEach((row) => {
+      const raw = row?.[categoriaIdx];
+      const label = String(raw || "").trim();
+      if (!label) return;
+      const key = normalizeCategory(label);
+      if (!categoriesMap.has(key)) categoriesMap.set(key, label);
+    });
+  }
+
+  if (!categoriesMap.size) {
+    return CATEGORIAS.slice();
+  }
+
+  const baseNormalized = new Set(CATEGORIAS.map((cat) => normalizeCategory(cat)));
+  const ordered = [];
+  CATEGORIAS.forEach((cat) => {
+    const key = normalizeCategory(cat);
+    if (categoriesMap.has(key)) {
+      ordered.push(categoriesMap.get(key) || cat);
+    }
+  });
+  const extras = [];
+  for (const [key, label] of categoriesMap.entries()) {
+    if (!baseNormalized.has(key)) extras.push(label);
+  }
+  extras.sort((a, b) => a.localeCompare(b));
+  return ordered.concat(extras);
+}
+
+function updateCategoryFilterOptions(headerRowValues, dataRows) {
+  if (!categoryFilter) return;
+  const options = buildCategoryOptions(headerRowValues, dataRows);
+  const current = selectedCategory;
+  categoryFilter.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = CATEGORY_ALL_VALUE;
+  allOption.textContent = "Todas as categorias";
+  categoryFilter.appendChild(allOption);
+
+  options.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+  });
+
+  const hasCurrent =
+    current === CATEGORY_ALL_VALUE ||
+    options.some((cat) => normalizeCategory(cat) === normalizeCategory(current));
+  selectedCategory = hasCurrent ? current : CATEGORY_ALL_VALUE;
+  categoryFilter.value = selectedCategory;
+  localStorage.setItem(CATEGORY_FILTER_KEY, selectedCategory);
 }
 
 function renderSheet(name) {
@@ -1257,6 +2204,7 @@ function renderSheet(name) {
   const reordered = reorderColumns(headerRowValues, dataRows);
   headerRowValues = reordered.headerRowValues || headerRowValues;
   dataRows = reordered.dataRows || dataRows;
+  updateCategoryFilterOptions(headerRowValues, dataRows);
   const maxCols = Math.max(
     headerRowValues.length,
     ...dataRows.map((row) => row.length)
@@ -1265,17 +2213,37 @@ function renderSheet(name) {
   const headerLower = headerRowValues.map((cell) =>
     String(cell || "").trim().toLowerCase()
   );
+  const categoriaColumnIndex = headerLower.findIndex(
+    (h) => h === "categoria" || h === "categoria_produto" || h === "categoria produto"
+  );
+  if (selectedCategory !== CATEGORY_ALL_VALUE && categoriaColumnIndex !== -1) {
+    dataRows = dataRows.filter((row) => categoryMatches(row[categoriaColumnIndex]));
+  }
   const validadeColumnIndex = headerLower.findIndex(
     (h) => h === "validade" || h === "vencimento" || h === "data"
   );
-  if (validadeColumnIndex !== -1) {
+  const vendidoColumnIndex = headerLower.findIndex((h) => h === "vendido");
+  const retiradoColumnIndex = headerLower.findIndex((h) => h === "retirado");
+  if (validadeColumnIndex !== -1 || vendidoColumnIndex !== -1 || retiradoColumnIndex !== -1) {
     dataRows = dataRows
-      .slice()
-      .sort(
-        (a, b) =>
-          getValidityTimestamp(a, validadeColumnIndex) -
-          getValidityTimestamp(b, validadeColumnIndex)
-      );
+      .map((row, index) => ({ row, index }))
+      .sort((a, b) => {
+        const aVend = vendidoColumnIndex !== -1 && toBoolean(a.row[vendidoColumnIndex], false);
+        const bVend = vendidoColumnIndex !== -1 && toBoolean(b.row[vendidoColumnIndex], false);
+        const aRet = retiradoColumnIndex !== -1 && toBoolean(a.row[retiradoColumnIndex], false);
+        const bRet = retiradoColumnIndex !== -1 && toBoolean(b.row[retiradoColumnIndex], false);
+        const aGroup = aRet ? 2 : aVend ? 1 : 0;
+        const bGroup = bRet ? 2 : bVend ? 1 : 0;
+        if (aGroup !== bGroup) return aGroup - bGroup;
+        if (aGroup === 0 && validadeColumnIndex !== -1) {
+          const diff =
+            getValidityTimestamp(a.row, validadeColumnIndex) -
+            getValidityTimestamp(b.row, validadeColumnIndex);
+          if (diff !== 0) return diff;
+        }
+        return a.index - b.index;
+      })
+      .map((item) => item.row);
   }
   const skuColumnIndex = headerRowValues.findIndex((cell) => {
     if (cell === null || cell === undefined) return false;
@@ -1354,6 +2322,8 @@ function renderSheet(name) {
     tr.appendChild(selectTd);
 
     let metaForRow = null;
+    const isSoldRow = toBoolean(payload?.vendido, false);
+    const isRemovedRow = toBoolean(payload?.retirado, false);
 
     for (let c = 0; c < maxCols; c++) {
       const td = document.createElement("td");
@@ -1362,6 +2332,8 @@ function renderSheet(name) {
       const keepRaw = headerName === "id" || headerName === "quantidade";
       const isBoolField =
         headerName === "troca" ||
+        headerName === "vendido" ||
+        headerName === "retirado" ||
         headerName === "rotatividade_alta" ||
         headerName === "rotatividade alta" ||
         headerName === "rotatividade";
@@ -1371,7 +2343,7 @@ function renderSheet(name) {
         td.textContent = keepRaw ? value ?? "" : formatCellValue(value);
       }
 
-      if (!metaForRow) {
+      if (!metaForRow && !isSoldRow && !isRemovedRow) {
         const header = (headerRowValues[c] || "").toString().toLowerCase().trim();
         if (header === "validade" || header === "vencimento" || header === "data") {
           metaForRow = getExpiryMeta(row[c]);
@@ -1407,7 +2379,11 @@ function renderSheet(name) {
       tr.appendChild(td);
     }
 
-    if (metaForRow) {
+    if (isRemovedRow) {
+      tr.classList.add("row-removed");
+    } else if (isSoldRow) {
+      tr.classList.add("row-sold");
+    } else if (metaForRow) {
       tr.classList.add(metaForRow.color);
     }
 
@@ -1444,9 +2420,31 @@ function renderSheet(name) {
       await launchTargets([payload]);
     });
 
+    const btnVendido = document.createElement("button");
+    btnVendido.type = "button";
+    btnVendido.className = "btn btn-success btn-sm";
+    btnVendido.style.marginLeft = "6px";
+    btnVendido.textContent = "Vendido";
+    btnVendido.addEventListener("click", async () => {
+      if (!payload) return;
+      await markSoldTargets([payload]);
+    });
+
+    const btnRetirado = document.createElement("button");
+    btnRetirado.type = "button";
+    btnRetirado.className = "btn btn-secondary btn-sm";
+    btnRetirado.style.marginLeft = "6px";
+    btnRetirado.textContent = "Retirado";
+    btnRetirado.addEventListener("click", async () => {
+      if (!payload) return;
+      await markRemovedTargets([payload]);
+    });
+
     actionsTd.appendChild(btnEdit);
     actionsTd.appendChild(btnDelete);
     actionsTd.appendChild(btnLancado);
+    actionsTd.appendChild(btnVendido);
+    actionsTd.appendChild(btnRetirado);
 
     tr.appendChild(actionsTd);
 
@@ -1457,11 +2455,24 @@ function renderSheet(name) {
   output.innerHTML = "";
   output.appendChild(table);
   updateBulkActionsUI();
+  updateDashboardFromSheet();
 }
 
 if (bulkLaunchBtn) {
   bulkLaunchBtn.addEventListener("click", () =>
     launchTargets(getSelectedPayloads())
+  );
+}
+
+if (bulkSoldBtn) {
+  bulkSoldBtn.addEventListener("click", () =>
+    markSoldTargets(getSelectedPayloads())
+  );
+}
+
+if (bulkRemovedBtn) {
+  bulkRemovedBtn.addEventListener("click", () =>
+    markRemovedTargets(getSelectedPayloads())
   );
 }
 
@@ -1493,6 +2504,14 @@ function buildPayloadFromRow(headers, row) {
     return -1;
   };
   const quantidadeIdx = findIndex(["quantidade"]);
+  const validadeIdx = findIndex(["validade", "vencimento", "data"]);
+  const categoriaIdx = findIndex([
+    "categoria",
+    "categoria_produto",
+    "categoria produto",
+  ]);
+  const vendidoIdx = findIndex(["vendido"]);
+  const retiradoIdx = findIndex(["retirado"]);
   const lancadoIdx = findIndex(["lançado", "lancado"]);
   const dataLancadoIdx = findIndex(["data_lançado", "data_lancado", "datalancado"]);
   const rotatividadeIdx = findIndex(["rotatividade_alta", "rotatividade alta", "rotatividade"]);
@@ -1503,6 +2522,10 @@ function buildPayloadFromRow(headers, row) {
   };
 
   const quantidadeRaw = getByIdx(quantidadeIdx);
+  const validadeRaw = getByIdx(validadeIdx);
+  const categoriaRaw = getByIdx(categoriaIdx);
+  const vendidoRaw = getByIdx(vendidoIdx);
+  const retiradoRaw = getByIdx(retiradoIdx);
   const lancadoRaw = getByIdx(lancadoIdx);
   const dataLancado = getByIdx(dataLancadoIdx);
   const rotatividadeRaw = getByIdx(rotatividadeIdx);
@@ -1515,11 +2538,14 @@ function buildPayloadFromRow(headers, row) {
     id: get("id"),
     ean: get("ean"),
     nome: String(get("nome") || "").trim(),
+    categoria: String(categoriaRaw || get("categoria") || "").trim(),
     quantidade: qty,
     quantidade_text:
       quantidadeRaw !== undefined && quantidadeRaw !== "" ? String(quantidadeRaw) : String(qty),
-    validade: get("validade"),
+    validade: validadeRaw !== "" ? validadeRaw : get("validade"),
     troca: toBoolean(get("troca"), false),
+    vendido: toBoolean(vendidoRaw, false),
+    retirado: toBoolean(retiradoRaw, false),
     rotatividade_alta: toBoolean(rotatividadeRaw, false),
     lancado,
     data_lancado: dataLancado,
@@ -1607,6 +2633,14 @@ const mensagem = document.getElementById("mensagem");
 const itensContainer = document.getElementById("itens-container");
 const enviarTodosBtn = document.getElementById("enviar-todos-btn");
 const addItemBtn = document.getElementById("add-item-btn");
+const CATEGORIAS = [
+  "açougue",
+  "pas",
+  "mercearia",
+  "padaria",
+  "check stand",
+  "hortifruti",
+];
 let itens = [];
 
 function ensureFormPanelVisible() {
@@ -1647,6 +2681,7 @@ function createItemFromCode(codigo, nome = "") {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     codigo,
     nome,
+    categoria: "",
     quantidade: "",
     validade: "",
     troca: false,
@@ -1682,6 +2717,7 @@ function syncItemCodeInput(item) {
 function applyProductInfoToItem(item, product) {
   if (!item || !product) return;
   if (product.nome && !item.nome) item.nome = product.nome;
+  if (product.categoria && !item.categoria) item.categoria = product.categoria;
   if (typeof product.troca === "boolean") item.troca = product.troca;
   if (typeof product.rotatividade_alta === "boolean") {
     item.rotatividade_alta = product.rotatividade_alta;
@@ -1689,7 +2725,7 @@ function applyProductInfoToItem(item, product) {
 }
 
 async function lookupAndFillItemByEan(item, ean, controls = {}) {
-  const { nomeInput, trocaSwitch, rotaSwitch, statusEl } = controls;
+  const { nomeInput, trocaSwitch, rotaSwitch, categoriaSelect, statusEl } = controls;
   if (!ean || ean.length !== 13) return;
   if (item.lastLookupEan === ean) return;
   item.lastLookupEan = ean;
@@ -1701,6 +2737,7 @@ async function lookupAndFillItemByEan(item, ean, controls = {}) {
   }
   applyProductInfoToItem(item, product);
   if (nomeInput) nomeInput.value = item.nome || "";
+  if (categoriaSelect) categoriaSelect.value = item.categoria || "";
   if (trocaSwitch?.input) {
     trocaSwitch.input.checked = !!item.troca;
     updateSwitchLabel(trocaSwitch.input, trocaSwitch.text);
@@ -1789,6 +2826,7 @@ function renderItens() {
       if (digits.length === 13) {
         lookupAndFillItemByEan(item, digits, {
           nomeInput,
+          categoriaSelect,
           trocaSwitch,
           rotaSwitch,
           statusEl: status,
@@ -1816,6 +2854,31 @@ function renderItens() {
     });
     nomeField.appendChild(nomeLabel);
     nomeField.appendChild(nomeInput);
+
+    const categoriaField = document.createElement("div");
+    categoriaField.className = "field";
+    const categoriaLabel = document.createElement("label");
+    categoriaLabel.textContent = "Categoria";
+    const categoriaSelect = document.createElement("select");
+    categoriaSelect.required = true;
+    const categoriaPlaceholder = document.createElement("option");
+    categoriaPlaceholder.value = "";
+    categoriaPlaceholder.textContent = "Selecione a categoria";
+    categoriaPlaceholder.disabled = true;
+    categoriaPlaceholder.selected = !item.categoria;
+    categoriaSelect.appendChild(categoriaPlaceholder);
+    CATEGORIAS.forEach((categoria) => {
+      const option = document.createElement("option");
+      option.value = categoria;
+      option.textContent = categoria;
+      categoriaSelect.appendChild(option);
+    });
+    categoriaSelect.value = item.categoria || "";
+    categoriaSelect.addEventListener("change", (e) => {
+      item.categoria = e.target.value;
+    });
+    categoriaField.appendChild(categoriaLabel);
+    categoriaField.appendChild(categoriaSelect);
 
     const qtdField = document.createElement("div");
     qtdField.className = "field";
@@ -1871,6 +2934,7 @@ function renderItens() {
     rotaField.appendChild(rotaSwitch.wrapper);
 
     fields.appendChild(nomeField);
+    fields.appendChild(categoriaField);
     fields.appendChild(qtdField);
     fields.appendChild(validadeField);
     fields.appendChild(trocaField);
@@ -1897,6 +2961,7 @@ function setStatus(el, text, type = "") {
 function validateItem(item) {
   if (!item.codigo) return "Escaneie o código de barras.";
   if (!item.nome || !item.nome.trim()) return "Informe o nome do produto.";
+  if (!item.categoria) return "Selecione a categoria do produto.";
   const qtd = Number(item.quantidade);
   if (!item.quantidade || Number.isNaN(qtd) || qtd <= 0)
     return "Quantidade deve ser maior que zero.";
@@ -1911,6 +2976,7 @@ async function enviarItem(item, index, statusEl) {
     id: item.id || item.codigo || "",
     ean: item.codigo,
     nome: item.nome.trim(),
+    categoria: item.categoria,
     quantidade: qty,
     quantidade_text: String(qty),
     validade: item.validade,

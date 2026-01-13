@@ -4,6 +4,447 @@
     <meta charset="UTF-8" />
     <title>Controle de Validades - Sistema de Cadastro e Controle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <style>
+      :root {
+        /* --- Paleta Enterprise (Koch/Power BI) --- */
+        --bg-app: #f3f4f6;       /* Cinza claro fundo */
+        --bg-card: #ffffff;      /* Branco cartões */
+        
+        --text-primary: #1f2937; /* Quase preto */
+        --text-secondary: #4b5563; /* Cinza médio */
+        --text-muted: #9ca3af;   /* Cinza claro */
+        
+        /* Cores da Marca */
+        --brand-primary: #dc2626; /* Vermelho Varejo */
+        --brand-dark: #b91c1c;
+        --brand-light: #fef2f2;
+        
+        /* Status (Cores de dados sóbrias) */
+        --color-success: #10b981;
+        --color-warning: #f59e0b;
+        --color-danger: #ef4444;
+        --color-info: #3b82f6;
+
+        /* UI Metrics */
+        --radius: 8px; /* Arredondamento sutil */
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        
+        /* Tamanho de toque mobile (44px min) */
+        --touch-target: 48px; 
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        font-family: 'Segoe UI', 'Roboto', -apple-system, sans-serif;
+        background-color: var(--bg-app);
+        color: var(--text-primary);
+        font-size: 16px; /* Legibilidade mobile */
+        line-height: 1.5;
+        padding-bottom: 40px; /* Espaço para scroll no mobile */
+      }
+
+      /* Ocultar scrollbar feia no mobile, mas manter funcional */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+      /* --- HEADER / TOPBAR --- */
+      .topbar {
+        background: var(--bg-card);
+        border-bottom: 1px solid #e5e7eb;
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column; /* Mobile: empilhado */
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-logo {
+        height: 36px;
+        border-radius: 4px;
+      }
+
+      .brand div {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+      }
+      
+      .brand small {
+        display: none; /* Simplifica no mobile */
+      }
+
+      .top-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+
+      /* --- LAYOUT CONTAINER --- */
+      .page {
+        width: 100%;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 100%;
+      }
+
+      /* --- CARDS & PAINÉIS (Estilo Power BI Tiles) --- */
+      .panel {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        padding: 16px;
+        box-shadow: var(--shadow-card);
+        border: 1px solid #e5e7eb;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Cabeçalho do Card */
+      .panel-header {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #f3f4f6;
+        padding-bottom: 10px;
+      }
+
+      h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+      h2 { font-size: 1.25rem; font-weight: 600; }
+      h3 { font-size: 1rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); }
+      
+      .panel-subtitle {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+
+      /* --- KPI GRIDS (Métricas) --- */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Mobile: 2 colunas */
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .metric-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--radius);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Faixa colorida lateral (Identidade visual Power BI) */
+      .metric-card::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+      }
+      .metric-card[data-metric="total"]::before { background: var(--color-info); }
+      .metric-card[data-metric="expired"]::before { background: var(--color-danger); }
+      .metric-card[data-metric="due7"]::before { background: var(--color-warning); }
+      .metric-card[data-metric="launched"]::before { background: var(--color-success); }
+
+      .metric-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      /* --- GRÁFICOS --- */
+      .charts-grid {
+        display: flex;
+        flex-direction: column; /* Mobile: Um embaixo do outro */
+        gap: 16px;
+      }
+
+      .chart-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--radius);
+        padding: 10px;
+        min-height: 250px;
+      }
+
+      /* --- LISTAS DE VENCIMENTO --- */
+      .expiry-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .expiry-item {
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #fff;
+        gap: 6px;
+        /* Indicador de status no topo do card no mobile */
+        border-top: 4px solid transparent; 
+      }
+
+      .expiry-item.expiry-red { border-top-color: var(--color-danger); background: var(--brand-light); }
+      .expiry-item.expiry-yellow { border-top-color: var(--color-warning); }
+      .expiry-item.expiry-green { border-top-color: var(--color-success); }
+
+      .expiry-item-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .expiry-name { font-weight: 600; font-size: 1rem; }
+      .expiry-date { font-size: 0.9rem; color: var(--text-secondary); }
+
+      /* --- TABELAS (Responsivas) --- */
+      #output {
+        border: 1px solid #e5e7eb;
+        border-radius: var(--radius);
+        overflow-x: auto; /* Scroll horizontal obrigatório no mobile */
+        background: #fff;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        white-space: nowrap; /* Evita quebra de linha feia */
+      }
+
+      th {
+        background: #f9fafb;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-align: left;
+        padding: 12px 16px;
+        border-bottom: 2px solid #e5e7eb;
+      }
+
+      td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+      }
+
+      /* Linhas Zebradas */
+      tbody tr:nth-child(even) { background-color: #f9fafb; }
+      
+      /* Status na tabela */
+      tr.expiry-red td:first-child { border-left: 4px solid var(--color-danger); }
+      tr.expiry-yellow td:first-child { border-left: 4px solid var(--color-warning); }
+
+      /* --- BOTÕES E INPUTS (Touch Friendly) --- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: var(--touch-target); /* Altura confortável para dedo */
+        padding: 0 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: 1px solid transparent;
+        cursor: pointer;
+        width: 100%; /* Mobile: Full width */
+        margin-bottom: 8px;
+        transition: background 0.2s;
+      }
+
+      /* Mobile: Botões lado a lado quando possível */
+      .header-actions .btn, .bulk-buttons .btn {
+        width: auto;
+        flex: 1;
+      }
+
+      .btn-primary {
+        background-color: var(--brand-primary);
+        color: white;
+      }
+      .btn-primary:active { background-color: var(--brand-dark); }
+
+      .btn-secondary {
+        background-color: white;
+        border-color: #d1d5db;
+        color: var(--text-primary);
+      }
+      .btn-secondary:active { background-color: #f3f4f6; }
+
+      .btn-sm { height: 36px; font-size: 0.85rem; }
+
+      input, select {
+        height: var(--touch-target);
+        padding: 0 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        width: 100%;
+        background: #fff;
+        font-size: 1rem; /* Evita zoom no iPhone */
+      }
+
+      input:focus, select:focus {
+        outline: none;
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+      }
+
+      /* --- CÂMERA / BARCODE --- */
+      .camera-box {
+        background: #000;
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 16px;
+        aspect-ratio: 4/3; /* Formato padrão de câmera */
+      }
+
+      #barcode-result {
+        font-size: 1.25rem;
+        font-weight: 700;
+        text-align: center;
+        padding: 10px;
+        background: #f3f4f6;
+        border-radius: var(--radius);
+        margin: 10px 0;
+        font-family: monospace;
+      }
+
+      /* --- FORMULÁRIOS E FILTROS --- */
+      .toolbar {
+        background: #f9fafb;
+        padding: 12px;
+        border-radius: var(--radius);
+        border: 1px solid #e5e7eb;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      /* --- EXTRAS --- */
+      .status-pill {
+        padding: 4px 10px;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .expiry-green { background: #d1fae5; color: #065f46; }
+      .expiry-red { background: #fee2e2; color: #991b1b; }
+
+      .bulk-actions {
+        display: none; /* Controlado via JS */
+        flex-direction: column;
+        gap: 10px;
+        background: #eff6ff;
+        border: 1px dashed #3b82f6;
+        padding: 12px;
+        border-radius: var(--radius);
+        margin-bottom: 16px;
+      }
+
+      /* --- MEDIA QUERIES (DESKTOP / TABLET) --- */
+      @media (min-width: 768px) {
+        /* Ajuste do Header para linha única */
+        .topbar {
+          flex-direction: row;
+          align-items: center;
+          padding: 0 24px;
+          height: 64px;
+        }
+        
+        .brand small { display: block; margin-left: 10px; color: var(--text-secondary); font-size: 0.8rem; font-weight: 400;}
+
+        .top-actions { width: auto; gap: 12px; }
+
+        /* Container centralizado e limitado */
+        .page {
+          max-width: 1400px; /* Largura máxima estilo Enterprise */
+          margin: 0 auto;
+          padding: 24px;
+        }
+
+        /* Dashboard Grid - 4 ou mais colunas */
+        .dashboard-grid {
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        /* Header do Painel */
+        .panel-header {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        /* Botões tamanho normal no desktop */
+        .btn {
+          width: auto;
+          margin-bottom: 0;
+        }
+
+        /* Gráficos lado a lado */
+        .charts-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr); /* 3 colunas */
+        }
+        .charts-grid .chart-card:first-child {
+          grid-column: span 2; /* Gráfico principal maior */
+        }
+
+        /* Toolbar em linha */
+        .toolbar {
+          flex-direction: row;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        .toolbar select { width: auto; min-width: 150px; }
+
+        /* Layout Câmera + Info lado a lado */
+        .barcode-grid {
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          gap: 24px;
+        }
+        
+        /* Lista de vencimento em Grid */
+        .expiry-list {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+      }
+    </style>
     <style id="auth-guard-style">
       /* Evita flash do index antes da checagem */
       body { display: none !important; }
@@ -192,6 +633,232 @@
         background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0));
       }
 
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .metric-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 1rem 1.1rem;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .metric-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .metric-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-top: 0.25rem;
+      }
+
+      .metric-card[data-metric] {
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+
+      .metric-card[data-metric]:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--border-medium);
+      }
+
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+      }
+
+      .chart-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        box-shadow: var(--shadow-sm);
+        min-height: 240px;
+      }
+
+      .expiry-board {
+        margin-top: 1.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 1.2rem 1.3rem;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .expiry-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+
+      .expiry-meta {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .expiry-count {
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid var(--border-light);
+        background: #f8fafc;
+        font-weight: 700;
+        color: var(--text-secondary);
+      }
+
+      .expiry-updated {
+        font-weight: 600;
+      }
+
+      .expiry-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+      }
+
+      .expiry-item {
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 0.9rem 1rem;
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        color: var(--text-primary);
+      }
+
+      .expiry-item.expiry-red {
+        border-left: 6px solid #ef4444;
+        background: #fff5f5;
+      }
+
+      .expiry-item.expiry-yellow {
+        border-left: 6px solid #f59e0b;
+        background: #fff8e7;
+      }
+
+      .expiry-item.expiry-green {
+        border-left: 6px solid #22c55e;
+        background: #f3fdf5;
+      }
+
+      .expiry-item.is-clickable {
+        cursor: pointer;
+      }
+
+      .expiry-item.is-clickable:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .expiry-item-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .expiry-name {
+        font-weight: 700;
+        font-size: 1rem;
+      }
+
+      .expiry-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+
+      .expiry-item.expiry-red .expiry-tag {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecdd3;
+      }
+
+      .expiry-item.expiry-yellow .expiry-tag {
+        background: #fef3c7;
+        color: #b45309;
+        border-color: #fde68a;
+      }
+
+      .expiry-item.expiry-green .expiry-tag {
+        background: #dcfce7;
+        color: #15803d;
+        border-color: #bbf7d0;
+      }
+
+      .expiry-date {
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .expiry-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .expiry-chip {
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid var(--border-light);
+        background: #f8fafc;
+        font-weight: 600;
+      }
+
+      .expiry-empty {
+        padding: 1rem;
+        border: 1px dashed var(--border-light);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+      }
+
+      .live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: #ecfeff;
+        color: #0e7490;
+        border: 1px solid #a5f3fc;
+      }
+
+      .live-pill.offline {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-color: #fecaca;
+      }
+
       .panel-header {
         display: flex;
         justify-content: space-between;
@@ -271,6 +938,11 @@
         font-size: 0.85rem;
       }
 
+      .btn-xs {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.78rem;
+      }
+
       .toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -339,6 +1011,11 @@
         outline: none;
         border-color: var(--accent-primary);
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      }
+
+      #category-filter {
+        width: 220px;
+        min-width: 180px;
       }
 
       #output {
@@ -418,6 +1095,24 @@
 
       .sheet-table tr.expiry-green {
         border-left: 4px solid #22c55e;
+      }
+
+      .sheet-table tr.row-sold td,
+      .sheet-table tr.row-sold th.row-index {
+        background: #e0f2fe;
+      }
+
+      .sheet-table tr.row-removed td,
+      .sheet-table tr.row-removed th.row-index {
+        background: #f1f5f9;
+      }
+
+      .sheet-table tr.row-sold {
+        border-left: 4px solid #0ea5e9;
+      }
+
+      .sheet-table tr.row-removed {
+        border-left: 4px solid #94a3b8;
       }
 
       .sheet-table tr.selected-row td,
@@ -709,6 +1404,170 @@
         border: 1px solid var(--border-medium);
       }
 
+      #detail-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 9998;
+        padding: 1rem;
+      }
+
+      #detail-modal .modal-card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        max-width: 760px;
+        width: 100%;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-medium);
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+
+      .detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .detail-meta {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+
+      .detail-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        overflow: auto;
+        padding-right: 0.25rem;
+      }
+
+      .detail-item {
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 0.85rem 1rem;
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .detail-item.expiry-red {
+        border-left: 6px solid #ef4444;
+        background: #fff5f5;
+      }
+
+      .detail-item.expiry-yellow {
+        border-left: 6px solid #f59e0b;
+        background: #fff8e7;
+      }
+
+      .detail-item.expiry-green {
+        border-left: 6px solid #22c55e;
+        background: #f3fdf5;
+      }
+
+      .detail-item-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .detail-item-name {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-primary);
+      }
+
+      .detail-item-date {
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .detail-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        border: 1px solid transparent;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+
+      .detail-badge.expiry-red {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecdd3;
+      }
+
+      .detail-badge.expiry-yellow {
+        background: #fef3c7;
+        color: #b45309;
+        border-color: #fde68a;
+      }
+
+      .detail-badge.expiry-green {
+        background: #dcfce7;
+        color: #15803d;
+        border-color: #bbf7d0;
+      }
+
+      .detail-badge.lancado-true {
+        background: #e0f2fe;
+        color: #075985;
+        border-color: #bae6fd;
+      }
+
+      .detail-badge.lancado-false {
+        background: #f8fafc;
+        color: #334155;
+        border-color: #e2e8f0;
+      }
+
+      .detail-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .detail-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.2rem;
+      }
+
+      .detail-tag {
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid var(--border-light);
+        background: #f8fafc;
+        font-weight: 600;
+      }
+
+      .detail-empty {
+        padding: 1rem;
+        border: 1px dashed var(--border-light);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+      }
+
       .modal-actions {
         margin-top: 1rem;
         display: flex;
@@ -845,6 +1704,14 @@
         #reader1 {
           height: 140px;
         }
+
+        .expiry-list {
+          grid-template-columns: 1fr;
+        }
+
+        #category-filter {
+          width: 100%;
+        }
       }
     </style>
 
@@ -867,6 +1734,77 @@
       </div>
     </div>
     <div class="page">
+      <!-- Painel de dashboard -->
+      <div class="panel" id="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Painel em tempo real</h2>
+            <div class="panel-subtitle">
+              KPIs e gráficos atualizados automaticamente.
+            </div>
+          </div>
+          <div class="header-actions">
+            <span class="live-pill offline" id="realtime-status">Tempo real: desconectado</span>
+            <button id="refresh-dashboard-btn" class="btn btn-secondary btn-sm" type="button">
+              Atualizar agora
+            </button>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="metric-card" data-metric="total">
+            <div class="metric-title">Total de produtos</div>
+            <div class="metric-value" id="metric-total">0</div>
+          </div>
+          <div class="metric-card" data-metric="expired">
+            <div class="metric-title">Vencidos</div>
+            <div class="metric-value" id="metric-expired">0</div>
+          </div>
+          <div class="metric-card" data-metric="due7">
+            <div class="metric-title">Vence em 7 dias</div>
+            <div class="metric-value" id="metric-due7">0</div>
+          </div>
+          <div class="metric-card" data-metric="launched">
+            <div class="metric-title">Lançados</div>
+            <div class="metric-value" id="metric-launched">0</div>
+          </div>
+          <div class="metric-card" data-metric="not-launched">
+            <div class="metric-title">Não lançados</div>
+            <div class="metric-value" id="metric-not-launched">0</div>
+          </div>
+          <div class="metric-card" data-metric="expired-rate">
+            <div class="metric-title">Taxa de vencidos</div>
+            <div class="metric-value" id="metric-expired-rate">0%</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <canvas id="chart-expiry"></canvas>
+          </div>
+          <div class="chart-card">
+            <canvas id="chart-launch"></canvas>
+          </div>
+          <div class="chart-card">
+            <canvas id="chart-buckets"></canvas>
+          </div>
+        </div>
+
+        <div class="expiry-board">
+          <div class="expiry-header">
+            <div>
+              <h3>Produtos a vencer</h3>
+              <div class="panel-subtitle">Vencidos e próximos 30 dias.</div>
+            </div>
+            <div class="expiry-meta">
+              <span class="expiry-updated" id="expiry-updated">Atualizado agora</span>
+              <span class="expiry-count" id="expiry-count">0 itens</span>
+            </div>
+          </div>
+          <div class="expiry-list" id="expiry-list"></div>
+        </div>
+      </div>
+
       <!-- Painel de planilha -->
       <div class="panel" id="planilha-panel">
         <div class="panel-header">
@@ -889,6 +1827,8 @@
         <div class="toolbar" id="toolbar" style="display: none">
           <span>Planilha:</span>
           <select id="sheet-select"></select>
+          <span>Categoria:</span>
+          <select id="category-filter"></select>
           <div class="toolbar-spacer"></div>
           <div class="env-switch">
             <label for="env-select">Ambiente:</label>
@@ -922,6 +1862,12 @@
           <div class="bulk-buttons">
             <button class="btn btn-success btn-sm" type="button" id="bulk-launch-btn">
               Lançar selecionados
+            </button>
+            <button class="btn btn-success btn-sm" type="button" id="bulk-sold-btn">
+              Vendido selecionados
+            </button>
+            <button class="btn btn-secondary btn-sm" type="button" id="bulk-removed-btn">
+              Retirado selecionados
             </button>
             <button class="btn btn-secondary btn-sm" type="button" id="bulk-edit-btn">
               Editar selecionados
@@ -1050,9 +1996,24 @@
       </div>
     </div>
 
+    <div id="detail-modal">
+      <div class="modal-card">
+        <div class="detail-header">
+          <h3 id="detail-title">Detalhes</h3>
+          <button class="btn btn-secondary btn-sm" type="button" id="detail-close-btn">
+            Fechar
+          </button>
+        </div>
+        <p class="modal-hint" id="detail-subtitle"></p>
+        <div class="detail-meta" id="detail-meta"></div>
+        <div class="detail-list" id="detail-list"></div>
+      </div>
+    </div>
+
     <!-- Dependências -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="main.js"></script>
 
   </body>
