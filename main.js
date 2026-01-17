@@ -130,6 +130,7 @@ let launchChart = null;
 let bucketsChart = null;
 let realtimeRefreshTimer = null;
 let isRefreshing = false;
+let lastPlanilhaSignature = null;
 
 if (!isAuthenticated || !currentUserEmail) {
   localStorage.removeItem(AUTH_KEY);
@@ -704,10 +705,13 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
   }
   if (isRefreshing) return;
   isRefreshing = true;
-  clearSelections();
-  renderedRowMap = new Map();
-  updateBulkActionsUI();
-  output.innerHTML = "";
+  const isRealtime = reason === "realtime";
+  if (!isRealtime) {
+    clearSelections();
+    renderedRowMap = new Map();
+    updateBulkActionsUI();
+    output.innerHTML = "";
+  }
   if (!silent && statusEl) {
     statusEl.textContent = "Carregando planilha do servidor...";
   } else if (statusEl && reason === "realtime") {
@@ -725,6 +729,12 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
         const data = await response.clone().json();
         const rows = normalizeJsonRows(data);
         if (!rows.length) return false;
+        const signature = computeRowsSignature(rows);
+        if (signature && signature === lastPlanilhaSignature && isRealtime) {
+          if (statusEl) statusEl.textContent = "Nenhuma mudança detectada.";
+          return true;
+        }
+        if (signature) lastPlanilhaSignature = signature;
         const { wb, sheetName } = buildWorkbookFromProducts(rows);
         workbook = wb;
 
@@ -735,7 +745,7 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
         option.selected = true;
         sheetSelect.appendChild(option);
         toolbar.style.display = "flex";
-        renderSheet(sheetName);
+        renderSheet(sheetName, { reuseTable: isRealtime });
         statusEl.textContent = "Planilha carregada com sucesso.";
         updateDashboardFromSheet();
         return true;
@@ -754,6 +764,16 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
     }
 
     workbook = await responseToWorkbook(res);
+    if (workbook?.SheetNames?.length) {
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+      const signature = computeRowsSignature(rows);
+      if (signature && signature === lastPlanilhaSignature && isRealtime) {
+        if (statusEl) statusEl.textContent = "Nenhuma mudança detectada.";
+        return;
+      }
+      if (signature) lastPlanilhaSignature = signature;
+    }
 
     if (!workbook || !workbook.SheetNames || !workbook.SheetNames.length) {
       statusEl.textContent = "Nenhuma planilha encontrada na resposta.";
@@ -772,7 +792,7 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
     });
 
     toolbar.style.display = workbook.SheetNames.length ? "flex" : "none";
-    renderSheet(workbook.SheetNames[0]);
+    renderSheet(workbook.SheetNames[0], { reuseTable: isRealtime });
     statusEl.textContent = "Planilha carregada com sucesso.";
     updateDashboardFromSheet();
   } catch (err) {
@@ -1608,6 +1628,11 @@ function scheduleRealtimeRefresh() {
 function applyRealtimePayload(payload) {
   const rows = normalizeJsonRows(payload);
   if (!rows.length) return false;
+  const signature = computeRowsSignature(rows);
+  if (signature && signature === lastPlanilhaSignature) {
+    return true;
+  }
+  if (signature) lastPlanilhaSignature = signature;
 
   const { wb, sheetName } = buildWorkbookFromProducts(rows);
   workbook = wb;
@@ -1620,7 +1645,7 @@ function applyRealtimePayload(payload) {
   sheetSelect.appendChild(option);
   toolbar.style.display = "flex";
 
-  renderSheet(sheetName);
+  renderSheet(sheetName, { reuseTable: true });
   if (statusEl) statusEl.textContent = "Planilha atualizada em tempo real.";
   updateDashboardFromSheet();
   return true;
@@ -1715,6 +1740,40 @@ function normalizeJsonRows(json) {
   const firstArray = findFirstArray(json);
   if (firstArray) return firstArray;
   return [];
+}
+
+function sortObjectKeys(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => sortObjectKeys(item));
+  }
+  if (value && typeof value === "object") {
+    const sorted = {};
+    Object.keys(value)
+      .sort()
+      .forEach((key) => {
+        sorted[key] = sortObjectKeys(value[key]);
+      });
+    return sorted;
+  }
+  return value;
+}
+
+function hashString(value) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return String(hash);
+}
+
+function computeRowsSignature(rows) {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  try {
+    const normalized = sortObjectKeys(rows);
+    return hashString(JSON.stringify(normalized));
+  } catch {
+    return null;
+  }
 }
 
 function responseToWorkbook(res) {
@@ -1876,6 +1935,14 @@ function requestDeletePassword() {
 function getRowKey(payload, rowNumber) {
   const base = payload?.id || payload?.ean || `row-${rowNumber}`;
   return `${base}::${rowNumber}`;
+}
+
+function getHeaderSignature(headerRowValues, maxCols) {
+  const normalized = [];
+  for (let i = 0; i < maxCols; i += 1) {
+    normalized.push(String(headerRowValues[i] ?? ""));
+  }
+  return hashString(JSON.stringify(normalized));
 }
 
 function clearSelections() {
@@ -2211,7 +2278,7 @@ function updateCategoryFilterOptions(headerRowValues, dataRows) {
   localStorage.setItem(CATEGORY_FILTER_KEY, selectedCategory);
 }
 
-function renderSheet(name) {
+function renderSheet(name, { reuseTable = false } = {}) {
   const ws = workbook.Sheets[name];
   if (!ws) {
     output.innerHTML = "<p>Planilha não encontrada.</p>";
@@ -2296,6 +2363,8 @@ function renderSheet(name) {
 
   const table = document.createElement("table");
   table.className = "sheet-table";
+  const headerSignature = getHeaderSignature(headerRowValues, maxCols);
+  table.dataset.headerSignature = headerSignature;
 
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
@@ -2489,8 +2558,24 @@ function renderSheet(name) {
   });
   table.appendChild(tbody);
 
-  output.innerHTML = "";
-  output.appendChild(table);
+  const previousScrollTop = output.scrollTop;
+  const existingTable = output.querySelector("table.sheet-table");
+  if (reuseTable && existingTable && existingTable.dataset.headerSignature === headerSignature) {
+    const existingTbody = existingTable.querySelector("tbody");
+    const newTbody = table.querySelector("tbody");
+    if (existingTbody && newTbody) {
+      existingTable.replaceChild(newTbody, existingTbody);
+      existingTable.dataset.headerSignature = headerSignature;
+    } else {
+      existingTable.replaceWith(table);
+    }
+  } else if (existingTable) {
+    output.replaceChild(table, existingTable);
+  } else {
+    output.innerHTML = "";
+    output.appendChild(table);
+  }
+  output.scrollTop = previousScrollTop;
   updateBulkActionsUI();
   updateDashboardFromSheet();
 }
