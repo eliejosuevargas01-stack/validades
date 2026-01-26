@@ -3,7 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Controle de Validades • Cadastre e controle em minutos</title>
+    <title>Controle de Validades | Reduza perdas e controle validades</title>
+    <meta name="description" content="Controle de Validades transforma validade em acao: risco, alertas e operacao em tempo real. Conheca o ecossistema e comece agora." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://controledevalidades.online/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Controle de Validades",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Controle de validades com risco, rastreabilidade e operacao em tempo real.",
+        "url": "https://controledevalidades.online/",
+        "creator": {
+          "@type": "Person",
+          "name": "Eliezer",
+          "jobTitle": "Engenheiro de Software",
+          "sameAs": [
+            "https://www.linkedin.com/in/eliezer"
+          ]
+        }
+      }
+    </script>
     <style id="sales-guard-style">
       body { display: none; }
     </style>
@@ -29,334 +51,563 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
+      /* ==========================================================================
+         1. VARIÁVEIS E RESET (MESMO TEMA DO DASHBOARD)
+         ========================================================================== */
       :root {
-        --bg-primary: #f5f7fb;
-        --bg-secondary: #f8fafc;
-        --bg-tertiary: #eef2f7;
-        --text-primary: #0f172a;
-        --text-secondary: #1f2937;
-        --text-muted: #475569;
-        --accent-primary: #7c3aed;
-        --accent-secondary: #a855f7;
-        --accent-success: #22c55e;
-        --accent-warning: #fbbf24;
-        --accent-error: #ef4444;
-        --border-light: rgba(15, 23, 42, 0.08);
-        --border-medium: rgba(15, 23, 42, 0.16);
-        --shadow-sm: 0 8px 20px rgba(15, 23, 42, 0.08);
-        --shadow-md: 0 14px 40px rgba(15, 23, 42, 0.12);
-        --shadow-lg: 0 22px 80px rgba(15, 23, 42, 0.16);
-        --radius-sm: 10px;
-        --radius-md: 14px;
-        --radius-lg: 18px;
-        --radius-xl: 22px;
-        --blur: blur(16px);
-        --gradient: radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.12), transparent 36%), radial-gradient(circle at 82% 8%, rgba(6, 182, 212, 0.12), transparent 32%), radial-gradient(circle at 42% 82%, rgba(16, 185, 129, 0.12), transparent 30%);
+          /* Cores Base */
+          --bg-body: #f3f4f6;          /* Cinza fundo tela */
+          --bg-surface: #ffffff;       /* Branco puro (Cards/Paineis) */
+          --bg-subtle: #f9fafb;        /* Cinza muito leve (Fundo de seções internas) */
+          
+          /* Tipografia */
+          --text-primary: #111827;     /* Preto quase puro */
+          --text-secondary: #4b5563;   /* Cinza médio */
+          --text-muted: #9ca3af;       /* Cinza claro */
+          
+          /* Branding */
+          --primary: #2563eb;          /* Azul Principal */
+          --primary-hover: #1d4ed8;
+          --primary-light: #eff6ff;
+          
+          /* Status (Igual ao Dashboard) */
+          --status-critical-bg: #fef2f2;
+          --status-critical-text: #991b1b;
+          --status-warning-bg: #fffbeb;
+          --status-warning-text: #92400e;
+          --status-safe-bg: #ecfdf5;
+          --status-safe-text: #065f46;
+
+          /* UI Specs */
+          --max-width: 1200px;
+          --radius: 8px;               /* Bordas levemente arredondadas */
+          --radius-lg: 12px;
+          --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          --border: 1px solid #e5e7eb;
       }
+
       * { box-sizing: border-box; margin: 0; padding: 0; }
+
       body {
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.6;
-        color: var(--text-primary);
-        background: var(--bg-primary);
-        min-height: 100vh;
-        padding: 1.25rem 1rem 2.5rem;
-        position: relative;
-        overflow-x: hidden;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          background-color: var(--bg-body);
+          color: var(--text-primary);
+          line-height: 1.6;
+          -webkit-font-smoothing: antialiased;
+          padding-bottom: 60px;
       }
-      body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: var(--gradient);
-        z-index: 0;
-        opacity: 0.45;
-        pointer-events: none;
+
+      /* Container Central */
+      .page-shell {
+          width: 100%;
+          max-width: var(--max-width);
+          margin: 0 auto;
+          padding: 20px;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+          align-items: start;
       }
+
       .page {
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        position: relative;
-        z-index: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+          min-width: 0;
       }
+
+      .side-menu {
+          background: var(--bg-surface);
+          border: var(--border);
+          border-radius: 0 12px 12px 0;
+          padding: 16px;
+          box-shadow: var(--shadow-sm);
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: 240px;
+          transform: translateX(-110%);
+          transition: transform 0.2s ease;
+          z-index: 1005;
+          overflow-y: auto;
+      }
+
+      .side-menu.is-open {
+          transform: translateX(0);
+      }
+
+      .side-menu-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.4);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+          z-index: 1000;
+      }
+
+      .side-menu-backdrop.is-open {
+          opacity: 1;
+          pointer-events: auto;
+      }
+
+      .menu-toggle {
+          display: inline-flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          width: 38px;
+          height: 34px;
+          border-radius: 8px;
+          border: 1px solid var(--border);
+          background: #fff;
+          cursor: pointer;
+          margin-right: 10px;
+      }
+
+      .menu-toggle span {
+          width: 18px;
+          height: 2px;
+          background: var(--text-primary);
+          border-radius: 2px;
+      }
+
+      .menu-toggle:hover { background: #f3f4f6; }
+
+      .side-menu-title {
+          font-size: 0.75rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text-muted);
+          margin-bottom: 12px;
+          font-weight: 600;
+      }
+
+      .side-menu-links {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+      }
+
+      .side-menu a {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 10px;
+          border-radius: 8px;
+          text-decoration: none;
+          color: var(--text-primary);
+          font-weight: 500;
+      }
+
+      .side-menu a:hover { background: #f3f4f6; }
+
+      .side-menu a.is-active {
+          background: var(--primary-light);
+          color: var(--primary);
+          font-weight: 600;
+      }
+
+      /* ==========================================================================
+         2. TOPBAR (CABEÇALHO)
+         ========================================================================== */
       .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.85rem 1.15rem;
-        margin-bottom: 0.5rem;
-        background: #fff;
-        border: 1px solid var(--border-medium);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        backdrop-filter: var(--blur);
+          background: var(--bg-surface);
+          border: var(--border);
+          border-radius: var(--radius);
+          padding: 16px 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: var(--shadow-sm);
       }
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-      }
-      .brand-logo {
-        height: 44px;
-        width: auto;
-        border-radius: 10px;
-      }
+
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-logo { height: 36px; width: auto; border-radius: 6px; }
+      .brand div div:first-child { font-size: 1.1rem; font-weight: 700; color: #111; line-height: 1.2; }
+      .brand small { font-size: 0.85rem; color: var(--text-muted); font-weight: 400; }
+
       .pill {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 120px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        border: 1px solid var(--border-light);
-        background: #f8fafc;
+          background: var(--bg-subtle);
+          border: var(--border);
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--text-secondary);
       }
+
+      /* ==========================================================================
+         3. PAINÉIS E HERO SECTION
+         ========================================================================== */
       .panel {
-        background: #fff;
-        backdrop-filter: var(--blur);
-        border-radius: var(--radius-xl);
-        padding: 1.5rem 1.75rem;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--border-medium);
-        position: relative;
-        overflow: hidden;
+          background: var(--bg-surface);
+          border: var(--border);
+          border-radius: var(--radius-lg);
+          padding: 32px;
+          box-shadow: var(--shadow-sm);
       }
-      .panel::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        border-radius: var(--radius-xl);
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0));
-      }
-      h1, h2, h3 {
-        font-weight: 700;
-        line-height: 1.25;
-        color: var(--text-primary);
-      }
-      h1 { font-size: 1.9rem; margin-bottom: 0.2rem; }
-      h2 { font-size: 1.35rem; margin-bottom: 0.4rem; }
-      p { color: var(--text-muted); }
+
+      /* Hero Específico */
       .hero {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.25rem;
-        align-items: start;
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr; /* Texto maior que a imagem lateral */
+          gap: 40px;
+          align-items: center;
       }
-      .cta-row {
-        display: flex;
-        gap: 0.6rem;
-        flex-wrap: wrap;
-        margin-top: 0.9rem;
+
+      .hero h1 {
+          font-size: 2.25rem;
+          letter-spacing: -0.025em;
+          color: #111;
+          margin-bottom: 16px;
+          line-height: 1.2;
       }
+
+      .hero p {
+          font-size: 1.125rem;
+          color: var(--text-secondary);
+          margin-bottom: 24px;
+          max-width: 600px;
+      }
+
+      /* Títulos das Seções */
+      h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; color: #1f2937; }
+      h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 8px; color: #374151; }
+
+      /* ==========================================================================
+         4. ELEMENTOS DE UI (BOTÕES, BADGES, CARDS)
+         ========================================================================== */
+      /* Botões iguais ao App */
       .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.7rem 1.2rem;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-        border: 1px solid transparent;
-        outline: none;
-        white-space: nowrap;
-        letter-spacing: 0.01em;
-        text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 12px 24px;
+          border-radius: var(--radius);
+          font-weight: 600;
+          font-size: 1rem;
+          cursor: pointer;
+          text-decoration: none;
+          transition: all 0.2s;
+          border: 1px solid transparent;
       }
+
       .btn-primary {
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        color: #fff;
-        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
-        border-color: rgba(37, 99, 235, 0.35);
+          background-color: var(--primary);
+          color: white;
+          box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
       }
+      .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+
       .btn-secondary {
-        background-color: #e2e8f0;
-        color: var(--text-primary);
-        border: 1px solid var(--border-medium);
+          background-color: white;
+          border: var(--border);
+          color: var(--text-primary);
       }
-      .btn:hover {
-        transform: translateY(-1px);
-      }
-      .metrics {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 0.75rem;
-        margin-top: 1rem;
-      }
-      .metric {
-        background: #f8fafc;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 0.9rem 1rem;
-        box-shadow: var(--shadow-sm);
-      }
-      .metric strong { font-size: 1.4rem; color: var(--accent-primary); display: block; }
-      .metric span { color: var(--text-muted); font-size: 0.95rem; }
-      .cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1rem;
-      }
-      .card {
-        background: #f8fafc;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 1.1rem;
-        box-shadow: var(--shadow-sm);
-      }
-      .quote { color: var(--text-primary); font-size: 1.05rem; }
-      .author { color: var(--text-muted); font-weight: 600; }
+      .btn-secondary:hover { background-color: var(--bg-subtle); border-color: #d1d5db; }
+
+      .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;}
+
+      /* Badges e Pílulas */
       .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.35rem 0.7rem;
-        border-radius: 999px;
-        background: #e0f2fe;
-        border: 1px solid #bfdbfe;
-        font-size: 0.9rem;
-        color: #075985;
-        font-weight: 700;
+          display: inline-block;
+          background: var(--primary-light);
+          color: var(--primary);
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          padding: 4px 10px;
+          border-radius: 4px;
+          margin-bottom: 12px;
       }
-      .section {
-        display: grid;
-        gap: 0.8rem;
+
+      .inline-metrics { margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; }
+      .inline-metrics .pill { background: #f0f9ff; border-color: #bae6fd; color: #0369a1; }
+
+      /* Cards (Features e Passos) */
+      .cards, .steps {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 20px;
+          margin-top: 24px;
       }
-      .list {
-        display: grid;
-        gap: 0.45rem;
-        color: var(--text-muted);
+
+      .card, .step {
+          background: var(--bg-subtle);
+          border: var(--border);
+          border-radius: var(--radius);
+          padding: 24px;
+          transition: transform 0.2s;
       }
-      .cards img {
-        width: 100%;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-light);
-        box-shadow: var(--shadow-sm);
-        object-fit: cover;
+
+      .card:hover, .step:hover {
+          background: #fff;
+          box-shadow: var(--shadow-md);
+          border-color: #d1d5db;
+          transform: translateY(-2px);
       }
+
+      .list { display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem; }
+      .list span { display: block; color: var(--text-secondary); }
+      .list strong { color: var(--text-primary); }
+
+      /* ==========================================================================
+         5. TABELA DE EXEMPLO (IGUAL AO DASHBOARD)
+         ========================================================================== */
       .sheet-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
-        background: #fff;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          margin-top: 10px;
+          border: var(--border);
+          border-radius: var(--radius);
+          overflow: hidden; /* Arredonda cantos da tabela */
       }
-      .sheet-table th,
+
+      .sheet-table th {
+          background: #f8fafc;
+          color: var(--text-secondary);
+          font-weight: 600;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          padding: 12px 16px;
+          text-align: left;
+          border-bottom: var(--border);
+      }
+
       .sheet-table td {
-        padding: 0.65rem 0.75rem;
-        border-bottom: 1px solid var(--border-light);
-        text-align: left;
-        white-space: nowrap;
+          padding: 12px 16px;
+          border-bottom: 1px solid #f3f4f6;
+          font-size: 0.9rem;
+          background: #fff;
+          color: #374151;
       }
-      .sheet-table thead {
-        background: #f1f5f9;
-        color: var(--text-primary);
-        font-weight: 700;
-      }
-      .sheet-table tbody tr:hover {
-        background: #f8fafc;
-      }
+
+      .sheet-table tr:last-child td { border-bottom: none; }
+
+      /* Status da Tabela (Cores do Dashboard) */
+      .expiry-red td { background-color: var(--status-critical-bg) !important; color: var(--status-critical-text) !important; }
+      .expiry-yellow td { background-color: var(--status-warning-bg) !important; color: var(--status-warning-text) !important; }
+      .expiry-green td { background-color: var(--status-safe-bg) !important; color: var(--status-safe-text) !important; }
+
       .status-pill-small {
-        display: inline-flex;
-        align-items: center;
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #075985;
-        background: #e0f2fe;
-        border: 1px solid #bfdbfe;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          border: 1px solid rgba(0,0,0,0.1);
       }
-      .expiry-red { background: #ffe2e2; }
-      .expiry-yellow { background: #fff4d4; }
-      .expiry-green { background: #e5f8ed; }
-      .sheet-table tbody tr.expiry-red td { background: #ffe2e2; }
-      .sheet-table tbody tr.expiry-yellow td { background: #fff4d4; }
-      .sheet-table tbody tr.expiry-green td { background: #e5f8ed; }
-      .status-pill-small.ok {
-        color: #166534;
-        background: #dcfce7;
-        border-color: #bbf7d0;
+      .status-pill-small.crit { background: #fee2e2; color: #991b1b; }
+      .status-pill-small.warn { background: #fef3c7; color: #92400e; }
+      .status-pill-small.ok { background: #d1fae5; color: #065f46; }
+
+      .sheet-table-compact th,
+      .sheet-table-compact td {
+          vertical-align: top;
       }
-      .status-pill-small.warn {
-        color: #92400e;
-        background: #fef3c7;
-        border-color: #fcd34d;
+
+      .sheet-table .row-index {
+          width: 36px;
+          color: var(--text-muted);
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
       }
-      .status-pill-small.crit {
-        color: #b91c1c;
-        background: #fee2e2;
-        border-color: #fecdd3;
+
+      .sheet-table-compact .summary-cell {
+          min-width: 320px;
       }
-      .inline-metrics {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
+
+      .sheet-summary {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
       }
-      .pill-accent {
-        background: #e0f2fe;
-        color: #075985;
-        border: 1px solid #bfdbfe;
-        border-radius: 999px;
-        padding: 0.4rem 0.75rem;
-        font-weight: 700;
+
+      .sheet-summary-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 8px;
       }
-      .steps {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1rem;
+
+      .sheet-summary-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          line-height: 1.3;
+          flex: 1 1 auto;
+          word-break: break-word;
       }
-      .step {
-        background: #f8fafc;
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        box-shadow: var(--shadow-sm);
+
+      .sheet-summary-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          justify-content: flex-end;
       }
-      .step strong {
-        display: block;
-        margin-bottom: 0.35rem;
-        color: var(--text-primary);
+
+      .sheet-tag {
+          font-size: 0.7rem;
+          padding: 2px 8px;
+          border-radius: 999px;
+          border: 1px solid transparent;
+          background: #f1f5f9;
+          color: #475569;
+          white-space: nowrap;
       }
+
+      .tag-safe { background: #ecfdf5; color: #065f46; border-color: #bbf7d0; }
+      .tag-warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+      .tag-critical { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+      .tag-info { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+
+      .sheet-summary-primary,
+      .sheet-summary-secondary {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px 12px;
+      }
+
+      .sheet-summary-secondary {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+      }
+
+      .sheet-summary-item {
+          display: inline-flex;
+          gap: 4px;
+          align-items: baseline;
+          white-space: nowrap;
+      }
+
+      .sheet-summary-label {
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+      }
+
+      .sheet-summary-value {
+          font-size: 0.85rem;
+          color: var(--text-primary);
+      }
+
+      .sheet-summary-secondary .sheet-summary-value {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+      }
+
+      .sheet-expiry-value {
+          position: relative;
+          cursor: pointer;
+          text-decoration: underline dotted;
+      }
+
+      .sheet-expiry-value::after {
+          content: attr(data-full-date);
+          position: absolute;
+          left: 0;
+          bottom: calc(100% + 6px);
+          background: #111827;
+          color: #fff;
+          font-size: 0.7rem;
+          padding: 4px 8px;
+          border-radius: 6px;
+          white-space: nowrap;
+          opacity: 0;
+          transform: translateY(4px);
+          transition: opacity 0.15s ease, transform 0.15s ease;
+          pointer-events: none;
+          z-index: 10;
+      }
+
+      .sheet-expiry-value:hover::after,
+      .sheet-expiry-value:focus::after {
+          opacity: 1;
+          transform: translateY(0);
+      }
+
+      .sheet-expiry-value:not([data-full-date])::after {
+          display: none;
+      }
+
+      /* ==========================================================================
+         6. RODAPÉ E CTA FINAL
+         ========================================================================== */
       .cta-block {
-        text-align: center;
-        display: grid;
-        gap: 0.6rem;
+          max-width: 600px;
+          margin: 0 auto;
       }
-      @media (max-width: 900px) {
-        body { padding: 1rem 0.75rem; }
-        .panel { padding: 1.25rem; }
-        .topbar { flex-direction: column; align-items: flex-start; }
+      .cta-block h2 { font-size: 2rem; }
+
+      footer {
+          text-align: center;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+          border-top: var(--border);
+          margin-top: 40px;
+          padding-top: 20px;
+      }
+
+      /* ==========================================================================
+         7. RESPONSIVIDADE
+         ========================================================================== */
+      @media (max-width: 800px) {
+        .hero {
+          grid-template-columns: 1fr; /* Empilha no mobile */
+          text-align: center;
+        }
+        .hero p { margin: 0 auto 24px auto; }
+        .cta-row { justify-content: center; }
+        
+        .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .pill { display: none; } /* Esconde versão no mobile pra limpar */
+        
+        .sheet-table { display: block; overflow-x: auto; } /* Scroll na tabela */
+
       }
     </style>
   </head>
   <body>
-    <div class="page">
-      <div class="topbar">
-        <div class="brand">
-          <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
-          <div>
-            <div style="font-weight:700;">Controle de Validades</div>
-            <small style="color:var(--muted);">Cadastro rápido + controle automático</small>
+    <div class="page-shell">
+      <aside class="side-menu" id="side-menu" aria-hidden="true">
+        <div class="side-menu-title">Ecossistema</div>
+        <nav class="side-menu-links">
+          <a href="sales.html" class="is-active">Inicio</a>
+          <a href="index.html">Painel</a>
+          <a href="sobre.html">Sobre</a>
+          <a href="servicos.html">Servicos</a>
+          <a href="ferramentas.html">Ferramentas</a>
+          <a href="contato.html">Contato</a>
+          <a href="minha-conta.html">Minha conta</a>
+          <a href="login.html">Login</a>
+        </nav>
+      </aside>
+      <div class="side-menu-backdrop" id="menu-backdrop"></div>
+
+      <div class="page">
+        <div class="topbar">
+          <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <div class="brand">
+            <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+            <div>
+              <div style="font-weight:700;">Controle de Validades</div>
+              <small style="color:var(--text-muted);">Cadastro rápido + controle automático</small>
+            </div>
           </div>
+          <div class="pill">Versão 1.3.9 • Leitor EAN inteligente</div>
         </div>
-        <div class="pill">Versão 1.3.9 • Leitor EAN inteligente</div>
-      </div>
 
       <div class="panel hero">
         <div class="section">
@@ -364,7 +615,7 @@
           <h1>O app que automatiza sua gestão de validades — simples, rápido e inteligente.</h1>
           <p>Use a câmera, escaneie o código de barras e envie direto para a planilha inteligente. Acabe com rupturas, multas e retrabalho sem sistemas caros ou treinamentos longos.</p>
           <div class="cta-row">
-            <a class="btn btn-primary" href="login.html#signup">Criar conta e começar</a>
+            <a class="btn btn-primary" href="signup.html">Criar conta e começar</a>
           </div>
           <div class="inline-metrics">
             <span class="pill">3x mais rápido que lançamento manual</span>
@@ -447,17 +698,11 @@
         <h2>Veja a planilha organizada na prática</h2>
         <p style="margin-bottom:0.75rem;">Exemplo real de como os produtos ficam ordenados pela validade no painel.</p>
         <div style="overflow-x:auto;">
-          <table class="sheet-table">
+          <table class="sheet-table sheet-table-compact">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>EAN</th>
-                <th>Nome</th>
-                <th>Validade</th>
-                <th>Qtd</th>
-                <th>Troca</th>
-                <th>Rotatividade</th>
-                <th>Status</th>
+                <th class="row-index">#</th>
+                <th class="col-nome">Nome</th>
               </tr>
             </thead>
             <tbody id="sample-table-body"></tbody>
@@ -486,25 +731,33 @@
           <h2>Crie sua conta e comece a testar agora mesmo.</h2>
           <p>Login obrigatório, dados seguros e fluxo otimizado para barcode.</p>
           <div class="cta-row" style="justify-content:center;">
-            <a class="btn btn-primary" href="login.html#signup">Testar agora</a>
+            <a class="btn btn-primary" href="signup.html">Testar agora</a>
             <a class="btn btn-secondary" href="login.html">Já tenho conta</a>
           </div>
         </div>
       </div>
-      <footer style="text-align:center; color: var(--text-muted); font-size: 0.95rem; padding: 1rem 0 0.5rem;">
-        Landing Controle de Validades • Contato: <a href="mailto:contato@controledevalidades.com" style="color: var(--accent-primary); font-weight:700; text-decoration:none;">contato@controledevalidades.com</a>
-      </footer>
+        <footer style="text-align:center; color: var(--text-muted); font-size: 0.95rem; padding: 1rem 0 0.5rem;">
+          <div>Landing Controle de Validades • Contato: <a href="mailto:contato@controledevalidades.online" style="color: var(--primary); font-weight:700; text-decoration:none;">contato@controledevalidades.online</a></div>
+          <div style="margin-top: 6px;">
+            Desenvolvido por
+            <a href="https://www.linkedin.com/in/eliezer" target="_blank" rel="noopener" style="color: var(--primary); font-weight:700; text-decoration:none;">
+              Eliezer
+            </a>
+            - responsavel tecnico pela plataforma
+          </div>
+        </footer>
+      </div>
     </div>
     <script>
       (function demoExpiryColors() {
         const sampleData = [
-          { id: "1155", ean: "7897412583690", nome: "Queijo Mussarela 500g", qtd: 9, troca: "NÃO", rota: "Média", offset: 2, status: "Crítico" },
-          { id: "1170", ean: "7894561230987", nome: "Pão de Forma Integral", qtd: 14, troca: "NÃO", rota: "Média", offset: 5, status: "Atenção" },
-          { id: "1188", ean: "7899988776655", nome: "Leite UHT 1L", qtd: 32, troca: "SIM", rota: "Alta", offset: 7, status: "OK" },
-          { id: "1203", ean: "7891234567890", nome: "Iogurte Integral 170g", qtd: 18, troca: "NÃO", rota: "Alta", offset: 12, status: "OK" },
-          { id: "1099", ean: "7891478523690", nome: "Chocolate 90g", qtd: 22, troca: "NÃO", rota: "Alta", offset: 15, status: "OK" },
-          { id: "1108", ean: "7893216549870", nome: "Biscoito Recheado 140g", qtd: 26, troca: "NÃO", rota: "Alta", offset: 30, status: "OK" },
-          { id: "1122", ean: "7898529631470", nome: "Refrigerante 2L", qtd: 40, troca: "SIM", rota: "Alta", offset: 45, status: "OK" },
+          { id: "1155", ean: "7897412583690", nome: "Queijo Mussarela 500g", categoria: "Laticinios", qtd: 9, troca: "NAO", rota: "Media", offset: 2, lancado: true },
+          { id: "1170", ean: "7894561230987", nome: "Pao de Forma Integral", categoria: "Padaria", qtd: 14, troca: "NAO", rota: "Media", offset: 5 },
+          { id: "1188", ean: "7899988776655", nome: "Leite UHT 1L", categoria: "Laticinios", qtd: 32, troca: "SIM", rota: "Alta", offset: 7 },
+          { id: "1203", ean: "7891234567890", nome: "Iogurte Integral 170g", categoria: "Laticinios", qtd: 18, troca: "NAO", rota: "Alta", offset: 12 },
+          { id: "1099", ean: "7891478523690", nome: "Chocolate 90g", categoria: "Mercearia", qtd: 22, troca: "NAO", rota: "Alta", offset: 15 },
+          { id: "1108", ean: "7893216549870", nome: "Biscoito Recheado 140g", categoria: "Mercearia", qtd: 26, troca: "NAO", rota: "Alta", offset: 30 },
+          { id: "1122", ean: "7898529631470", nome: "Refrigerante 2L", categoria: "Bebidas", qtd: 40, troca: "SIM", rota: "Alta", offset: 45 },
         ];
 
         const formatDate = (dt) => {
@@ -512,6 +765,19 @@
           const mm = String(dt.getMonth() + 1).padStart(2, "0");
           const yyyy = dt.getFullYear();
           return `${dd}/${mm}/${yyyy}`;
+        };
+
+        const formatExpiryDays = (days) => {
+          if (days < 0) return `Vencido ha ${Math.abs(days)} dia(s)`;
+          if (days === 0) return "Vence hoje";
+          return `Faltam ${days} dia(s)`;
+        };
+
+        const getExpiryStatusTag = (days) => {
+          if (days < 0) return { label: "Vencido", className: "tag-critical" };
+          if (days <= 3) return { label: "Critico", className: "tag-critical" };
+          if (days <= 30) return { label: "Atencao", className: "tag-warning" };
+          return { label: "Seguro", className: "tag-safe" };
         };
 
         const now = new Date();
@@ -532,22 +798,100 @@
           return { ...item, date: dt, days, cls };
         }).sort((a, b) => a.date - b.date);
 
-        enriched.forEach((item) => {
+        enriched.forEach((item, index) => {
           const tr = document.createElement("tr");
           tr.classList.add(item.cls);
-          const statusClass =
-            item.status === "Crítico" ? "crit" : item.status === "Atenção" ? "warn" : "ok";
+          const statusTag = getExpiryStatusTag(item.days);
+          const tagsHtml = statusTag
+            ? `<span class="sheet-tag ${statusTag.className}">${statusTag.label}</span>`
+            : "";
+          const lancadoTag = item.lancado
+            ? `<span class="sheet-tag tag-info">Lancado p/ rebaixa</span>`
+            : "";
+          const expiryLabel = formatExpiryDays(item.days);
+          const fullDate = formatDate(item.date);
+          const expiryValue = expiryLabel
+            ? `<span class="sheet-summary-value sheet-expiry-value" data-full-date="${fullDate}">${expiryLabel}</span>`
+            : `<span class="sheet-summary-value">${fullDate}</span>`;
+
           tr.innerHTML = `
-            <td>${item.id}</td>
-            <td>${item.ean}</td>
-            <td>${item.nome}</td>
-            <td>${formatDate(item.date)}</td>
-            <td>${item.qtd}</td>
-            <td>${item.troca}</td>
-            <td>${item.rota}</td>
-            <td><span class="status-pill-small ${statusClass}">${item.status}</span></td>
+            <th class="row-index">${index + 2}</th>
+            <td class="summary-cell">
+              <div class="sheet-summary">
+                <div class="sheet-summary-header">
+                  <div class="sheet-summary-title">${item.nome}</div>
+                  <div class="sheet-summary-tags">
+                    ${tagsHtml}
+                    ${lancadoTag}
+                  </div>
+                </div>
+                <div class="sheet-summary-primary">
+                  <span class="sheet-summary-item">
+                    <span class="sheet-summary-label">Validade</span>
+                    ${expiryValue}
+                  </span>
+                  <span class="sheet-summary-item">
+                    <span class="sheet-summary-label">Categoria</span>
+                    <span class="sheet-summary-value">${item.categoria}</span>
+                  </span>
+                  <span class="sheet-summary-item">
+                    <span class="sheet-summary-label">Qtd</span>
+                    <span class="sheet-summary-value">${item.qtd}</span>
+                  </span>
+                </div>
+                <div class="sheet-summary-secondary">
+                  <span class="sheet-summary-item">
+                    <span class="sheet-summary-label">EAN</span>
+                    <span class="sheet-summary-value">${item.ean}</span>
+                  </span>
+                  <span class="sheet-summary-item">
+                    <span class="sheet-summary-label">ID</span>
+                    <span class="sheet-summary-value">${item.id}</span>
+                  </span>
+                  <span class="sheet-summary-item">
+                    <span class="sheet-summary-label">Troca</span>
+                    <span class="sheet-summary-value">${item.troca}</span>
+                  </span>
+                  <span class="sheet-summary-item">
+                    <span class="sheet-summary-label">Rotatividade</span>
+                    <span class="sheet-summary-value">${item.rota}</span>
+                  </span>
+                </div>
+              </div>
+            </td>
           `;
           tbody.appendChild(tr);
+        });
+      })();
+    </script>
+    <script>
+      (function hideHtmlExtension() {
+        if (!window.history || !window.history.replaceState) return;
+        const { pathname, search, hash } = window.location;
+        if (!pathname.endsWith(".html")) return;
+        const cleanPath = pathname
+          .replace(/\/index\.html$/, "/")
+          .replace(/\.html$/, "");
+        window.history.replaceState({}, "", `${cleanPath}${search}${hash}`);
+      })();
+    </script>
+    <script>
+      (function setupSideMenu() {
+        const toggle = document.getElementById("menu-toggle");
+        const menu = document.getElementById("side-menu");
+        const backdrop = document.getElementById("menu-backdrop");
+        if (!toggle || !menu || !backdrop) return;
+        const setOpen = (open) => {
+          menu.classList.toggle("is-open", open);
+          menu.setAttribute("aria-hidden", open ? "false" : "true");
+          backdrop.classList.toggle("is-open", open);
+          toggle.setAttribute("aria-expanded", String(open));
+          toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+        };
+        toggle.addEventListener("click", () => setOpen(!menu.classList.contains("is-open")));
+        backdrop.addEventListener("click", () => setOpen(false));
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") setOpen(false);
         });
       })();
     </script>

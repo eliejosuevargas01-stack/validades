@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Login | Controle de Validades</title>
+    <title>Assinatura | Controle de Validades</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -58,7 +58,7 @@
         border-radius: 20px;
         box-shadow: var(--shadow);
         padding: 1.75rem;
-        width: min(460px, 100%);
+        width: min(520px, 100%);
         position: relative;
         z-index: 1;
       }
@@ -66,21 +66,10 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        margin-bottom: 1.25rem;
-      }
-      .brand-mark {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        color: #fff;
-        display: grid;
-        place-items: center;
-        font-weight: 800;
-        box-shadow: 0 12px 36px rgba(37, 99, 235, 0.28);
+        margin-bottom: 1rem;
       }
       .brand-logo {
-        height: px;
+        height: 44px;
         width: auto;
         border-radius: 12px;
       }
@@ -92,6 +81,28 @@
         color: var(--text-muted);
         font-size: 0.95rem;
         margin-bottom: 1rem;
+      }
+      .plan {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      .plan h2 {
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        margin-bottom: 0.35rem;
+      }
+      .plan .price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+      }
+      .plan ul {
+        margin-top: 0.75rem;
+        padding-left: 1rem;
+        color: var(--text-muted);
       }
       form {
         display: flex;
@@ -142,6 +153,11 @@
       }
       .status.ok { color: #16a34a; }
       .status.err { color: #dc2626; }
+      .note {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+      }
       .switch {
         margin-top: 0.75rem;
         font-size: 0.95rem;
@@ -162,53 +178,56 @@
       <div class="brand">
         <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
         <div>
-          <h1>Controle de Validades</h1>
-          <p class="lead">Acesse sua conta para visualizar e cadastrar produtos.</p>
+          <h1>Assinatura Controle de Validades</h1>
+          <p class="lead">Crie sua conta de teste e escolha o plano na proxima etapa.</p>
         </div>
       </div>
 
-      <form id="login-form">
+      <form id="signup-form">
         <div class="field">
-          <label for="login-email">Email</label>
-          <input id="login-email" type="email" autocomplete="email" required />
+          <label for="signup-name">Nome completo</label>
+          <input id="signup-name" type="text" autocomplete="name" required />
         </div>
         <div class="field">
-          <label for="login-password">Senha</label>
-          <input id="login-password" type="password" autocomplete="current-password" required />
+          <label for="signup-email">Email</label>
+          <input id="signup-email" type="email" autocomplete="email" required />
         </div>
-        <button class="btn" type="submit">Entrar</button>
-        <div class="status" id="login-status"></div>
+        <div class="field">
+          <label for="signup-password">Senha</label>
+          <input id="signup-password" type="password" autocomplete="new-password" required />
+        </div>
+        <div class="field">
+          <label for="signup-company">Empresa</label>
+          <input id="signup-company" type="text" autocomplete="organization" required />
+        </div>
+        <button class="btn" type="submit">Criar conta e continuar</button>
+        <div class="status" id="signup-status"></div>
+        <div class="note">Conta criada com teste gratis limitado. Escolha o plano na proxima tela.</div>
       </form>
 
       <div class="switch">
-        <span>Nao tem conta?</span>
-        <a href="signup.html">Assinar plano</a>
+        <span>Ja tem conta?</span>
+        <a href="login.html">Fazer login</a>
       </div>
     </div>
 
     <script>
       const AUTH_KEY = "gp_auth";
       const USER_KEY = "gp_user";
-      const loginForm = document.getElementById("login-form");
-      const loginStatus = document.getElementById("login-status");
+      const signupForm = document.getElementById("signup-form");
+      const statusEl = document.getElementById("signup-status");
 
-      const storedAuth = localStorage.getItem(AUTH_KEY) === "1";
-      const storedEmail = localStorage.getItem(USER_KEY);
-      if (storedAuth && storedEmail) {
-        window.location.href = "index.html";
-      } else if (storedAuth && !storedEmail) {
-        localStorage.removeItem(AUTH_KEY);
+      function setStatus(text, type = "") {
+        if (!statusEl) return;
+        statusEl.textContent = text;
+        statusEl.className = "status";
+        if (type === "ok") statusEl.classList.add("ok");
+        if (type === "err") statusEl.classList.add("err");
       }
 
-      const LOGIN_ENDPOINTS = ["https://myn8n.seommerce.shop/webhook/login"];
-
-      function setStatus(el, text, type = "") {
-        if (!el) return;
-        el.textContent = text;
-        el.className = "status";
-        if (type === "ok") el.classList.add("ok");
-        if (type === "err") el.classList.add("err");
-      }
+      const SIGNUP_ENDPOINTS = [
+        "https://myn8n.seommerce.shop/webhook/singin",
+      ];
 
       async function postJsonWithFallback(urls, body) {
         let lastError = null;
@@ -228,64 +247,42 @@
         throw lastError || new Error("Falha ao enviar dados.");
       }
 
-      function goToDashboard(email) {
-        localStorage.setItem(AUTH_KEY, "1");
-        if (email) {
-          localStorage.setItem(USER_KEY, email);
-        }
-        window.location.href = "index.html";
-      }
-
-      loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = (document.getElementById("login-email").value || "").trim();
-        const password = (document.getElementById("login-password").value || "").trim();
-        if (!email || !password) {
-          setStatus(loginStatus, "Preencha email e senha.", "err");
+      signupForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const name = (document.getElementById("signup-name").value || "").trim();
+        const email = (document.getElementById("signup-email").value || "").trim();
+        const password = (document.getElementById("signup-password").value || "").trim();
+        const company = (document.getElementById("signup-company").value || "").trim();
+        if (!name || !email || !password || !company) {
+          setStatus("Preencha nome, email, senha e empresa.", "err");
           return;
         }
         const isValidEmail = /\S+@\S+\.\S+/.test(email);
         if (!isValidEmail) {
-          setStatus(loginStatus, "Digite um email válido.", "err");
+          setStatus("Digite um email valido.", "err");
           return;
         }
-        setStatus(loginStatus, "Enviando login...");
+        setStatus("Criando conta...");
         try {
-          const res = await postJsonWithFallback(LOGIN_ENDPOINTS, {
+          await postJsonWithFallback(SIGNUP_ENDPOINTS, {
+            action: "singin",
+            name,
             user: email,
             email,
             password,
+            company,
           });
-          const isJson = res?.headers?.get?.("content-type")?.includes("application/json");
-          let data = null;
-          if (isJson) {
-            try {
-              data = await res.clone().json();
-            } catch (err) {
-              console.warn("Resposta de login não é JSON válido:", err);
-            }
-          }
-          const loginMessage =
-            (typeof data === "string" && data) ||
-            (data && typeof data === "object" && data.login) ||
-            "";
-
-          const isEmptyArray = Array.isArray(data) && data.length === 0;
-          const isUserNotFound =
-            typeof loginMessage === "string" &&
-            loginMessage.toLowerCase().includes("usuario não encontrado");
-
-          if (!data || isEmptyArray || isUserNotFound) {
-            setStatus(loginStatus, "Credenciais inválidas ou usuário não encontrado.", "err");
-            return;
-          }
-          setStatus(loginStatus, "Login enviado.", "ok");
-          goToDashboard(email);
+          localStorage.setItem(AUTH_KEY, "1");
+          localStorage.setItem(USER_KEY, email);
+          localStorage.setItem("signup_name", name);
+          localStorage.setItem("signup_email", email);
+          localStorage.setItem("signup_company", company);
+          setStatus("Conta criada. Redirecionando...", "ok");
+          window.location.href = "planos.html";
         } catch (err) {
-          setStatus(loginStatus, `Erro ao enviar login: ${err.message || err}`, "err");
+          setStatus(err.message || "Erro ao criar conta.", "err");
         }
       });
-
     </script>
   </body>
 </html>

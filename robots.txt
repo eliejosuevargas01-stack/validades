@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /sobre.html
+Allow: /servicos.html
+Allow: /ferramentas.html
+Allow: /contato.html
+Disallow: /minha-conta.html
+Disallow: /login.html
+Disallow: /painel
+Disallow: /admin
+
+Sitemap: https://controledevalidades.online/sitemap.xml

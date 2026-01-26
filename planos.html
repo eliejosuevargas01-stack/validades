@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Planos | Controle de Validades</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+      :root {
+        --bg-primary: #f5f7fb;
+        --accent-primary: #2563eb;
+        --accent-secondary: #06b6d4;
+        --text-primary: #0f172a;
+        --text-muted: #475569;
+        --border: rgba(15, 23, 42, 0.12);
+        --shadow: 0 16px 50px rgba(15, 23, 42, 0.12);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg-primary);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+      body::before, body::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(60px);
+        opacity: 0.6;
+        z-index: 0;
+      }
+      body::before {
+        width: 360px;
+        height: 360px;
+        background: rgba(37, 99, 235, 0.18);
+        top: -80px;
+        left: -60px;
+      }
+      body::after {
+        width: 300px;
+        height: 300px;
+        background: rgba(6, 182, 212, 0.18);
+        bottom: -60px;
+        right: -40px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 1.75rem;
+        width: min(760px, 100%);
+        position: relative;
+        z-index: 1;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .brand-logo {
+        height: 44px;
+        width: auto;
+        border-radius: 12px;
+      }
+      h1 {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+      }
+      p.lead {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+      }
+      .plans {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+      }
+      .plan {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .plan h2 {
+        font-size: 1.1rem;
+        color: var(--text-primary);
+      }
+      .plan .price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+      }
+      .plan ul {
+        padding-left: 1rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        display: grid;
+        gap: 0.4rem;
+      }
+      .btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        font-weight: 700;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: #fff;
+        text-decoration: none;
+      }
+      .btn.secondary {
+        background: #e2e8f0;
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+      .note {
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="brand">
+        <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+        <div>
+          <h1>Escolha seu plano</h1>
+          <p class="lead">Sua conta de teste ja foi criada. Selecione como deseja continuar.</p>
+        </div>
+      </div>
+
+      <div class="plans">
+        <div class="plan">
+          <h2>Plano Free</h2>
+          <div class="price">R$ 0 / mes</div>
+          <ul>
+            <li>Ate 50 produtos por mes.</li>
+            <li>Cadastro manual e lista de vencidos.</li>
+            <li>Apenas alarme diario (sem relatorios personalizados).</li>
+          </ul>
+          <a class="btn secondary" href="index.html" data-plan="free">Continuar gratis</a>
+        </div>
+
+        <div class="plan">
+          <h2>Plano Business</h2>
+          <div class="price">R$ 150,00 / mes</div>
+          <ul>
+            <li>Produtos ilimitados e historico completo.</li>
+            <li>Importacao, exportacao e integracoes com n8n.</li>
+            <li>Alertas por email e relatorios personalizados.</li>
+          </ul>
+          <a class="btn" href="checkout.html" data-plan="business">Assinar Business</a>
+        </div>
+      </div>
+
+      <div class="note">Voce pode atualizar o plano a qualquer momento.</div>
+    </div>
+
+    <script>
+      const AUTH_KEY = "gp_auth";
+      const USER_KEY = "gp_user";
+      const storedAuth = localStorage.getItem(AUTH_KEY) === "1";
+      const storedEmail = localStorage.getItem(USER_KEY);
+      if (!storedAuth || !storedEmail) {
+        window.location.href = "signup.html";
+      }
+      document.querySelectorAll("[data-plan]").forEach((link) => {
+        link.addEventListener("click", () => {
+          const plan = link.getAttribute("data-plan");
+          if (plan) {
+            localStorage.setItem("plan_type", plan);
+            localStorage.removeItem("upgrade_toast_dismissed");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sobre | Visao de produto do Controle de Validades</title>
+    <meta name="description" content="Entenda como o Controle de Validades resolve vencimento com decisao por risco, rastreabilidade e escala operacional." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://controledevalidades.online/sobre.html" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Controle de Validades",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Controle de validades com risco, rastreabilidade e operacao em tempo real.",
+        "url": "https://controledevalidades.online/",
+        "creator": {
+          "@type": "Person",
+          "name": "Eliezer",
+          "jobTitle": "Engenheiro de Software",
+          "sameAs": [
+            "https://www.linkedin.com/in/eliezer"
+          ]
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+        <div>
+          <div style="font-size: 0.95rem;">Controle de Validades</div>
+          <small>Ecossistema e produto</small>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn btn-secondary btn-sm" href="index.html">Painel</a>
+        <a class="btn btn-primary btn-sm" href="sobre.html">Sobre</a>
+        <a class="btn btn-secondary btn-sm" href="servicos.html">Servicos</a>
+        <a class="btn btn-secondary btn-sm" href="ferramentas.html">Ferramentas</a>
+        <a class="btn btn-secondary btn-sm" href="contato.html">Contato</a>
+        <a class="btn btn-secondary btn-sm" href="minha-conta.html">Minha conta</a>
+      </div>
+    </div>
+
+    <div class="page-shell">
+      <aside class="side-menu" id="side-menu" aria-hidden="true">
+        <div class="side-menu-title">Ecossistema</div>
+        <nav class="side-menu-links">
+          <a href="sales.html">Inicio</a>
+          <a href="index.html">Painel</a>
+          <a href="sobre.html" class="is-active">Sobre</a>
+          <a href="servicos.html">Servicos</a>
+          <a href="ferramentas.html">Ferramentas</a>
+          <a href="contato.html">Contato</a>
+          <a href="minha-conta.html">Minha conta</a>
+          <a href="login.html">Login</a>
+        </nav>
+      </aside>
+      <div class="side-menu-backdrop" id="menu-backdrop"></div>
+
+      <div class="page-content">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Sobre</h2>
+              <div class="panel-subtitle">
+                Visao de produto aplicada a operacao real de loja.
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <h3>Dor real da operacao</h3>
+              <p>
+                Perdas por vencimento nao sao um problema de controle, e sim de
+                visibilidade e priorizacao. O objetivo aqui e transformar dados
+                em acao diaria.
+              </p>
+            </div>
+
+            <div>
+              <h3>Diferencial do app</h3>
+              <p>
+                Nao e apenas cadastro. E decisao baseada em risco, historico com
+                rastreabilidade e fluxos pensados para rotinas reais de loja.
+              </p>
+              <ul>
+                <li>Prioriza criticos e reduz perdas financeiras.</li>
+                <li>Registra vendido e retirado com rastreamento.</li>
+                <li>Entrega visao clara para quem toma decisao.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3>Visao de evolucao</h3>
+              <p>
+                A plataforma foi desenhada para crescer com integracoes, automacoes
+                e analises preditivas. O foco e escalar operacao, dados e impacto.
+              </p>
+            </div>
+          </div>
+        </div>
+        <footer class="site-footer">
+          Desenvolvido por
+          <a href="https://www.linkedin.com/in/eliezer" target="_blank" rel="noopener">
+            Eliezer
+          </a>
+          - responsavel tecnico pela plataforma
+        </footer>
+      </div>
+    </div>
+    <script>
+      (function hideHtmlExtension() {
+        if (!window.history || !window.history.replaceState) return;
+        const { pathname, search, hash } = window.location;
+        if (!pathname.endsWith(".html")) return;
+        const cleanPath = pathname
+          .replace(/\/index\.html$/, "/")
+          .replace(/\.html$/, "");
+        window.history.replaceState({}, "", `${cleanPath}${search}${hash}`);
+      })();
+    </script>
+    <script>
+      (function setupSideMenu() {
+        const toggle = document.getElementById("menu-toggle");
+        const menu = document.getElementById("side-menu");
+        const backdrop = document.getElementById("menu-backdrop");
+        if (!toggle || !menu || !backdrop) return;
+        const setOpen = (open) => {
+          menu.classList.toggle("is-open", open);
+          menu.setAttribute("aria-hidden", open ? "false" : "true");
+          backdrop.classList.toggle("is-open", open);
+          toggle.setAttribute("aria-expanded", String(open));
+          toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+        };
+        toggle.addEventListener("click", () => setOpen(!menu.classList.contains("is-open")));
+        backdrop.addEventListener("click", () => setOpen(false));
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") setOpen(false);
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Servicos | Capacidades do Controle de Validades</title>
+    <meta name="description" content="Priorizacao por risco, dashboards em tempo real, historico e integracoes que reduzem perdas e aceleram decisoes." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://controledevalidades.online/servicos.html" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Controle de Validades",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Controle de validades com risco, rastreabilidade e operacao em tempo real.",
+        "url": "https://controledevalidades.online/",
+        "creator": {
+          "@type": "Person",
+          "name": "Eliezer",
+          "jobTitle": "Engenheiro de Software",
+          "sameAs": [
+            "https://www.linkedin.com/in/eliezer"
+          ]
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+        <div>
+          <div style="font-size: 0.95rem;">Controle de Validades</div>
+          <small>Ecossistema e produto</small>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn btn-secondary btn-sm" href="index.html">Painel</a>
+        <a class="btn btn-secondary btn-sm" href="sobre.html">Sobre</a>
+        <a class="btn btn-primary btn-sm" href="servicos.html">Servicos</a>
+        <a class="btn btn-secondary btn-sm" href="ferramentas.html">Ferramentas</a>
+        <a class="btn btn-secondary btn-sm" href="contato.html">Contato</a>
+        <a class="btn btn-secondary btn-sm" href="minha-conta.html">Minha conta</a>
+      </div>
+    </div>
+
+    <div class="page-shell">
+      <aside class="side-menu" id="side-menu" aria-hidden="true">
+        <div class="side-menu-title">Ecossistema</div>
+        <nav class="side-menu-links">
+          <a href="sales.html">Inicio</a>
+          <a href="index.html">Painel</a>
+          <a href="sobre.html">Sobre</a>
+          <a href="servicos.html" class="is-active">Servicos</a>
+          <a href="ferramentas.html">Ferramentas</a>
+          <a href="contato.html">Contato</a>
+          <a href="minha-conta.html">Minha conta</a>
+          <a href="login.html">Login</a>
+        </nav>
+      </aside>
+      <div class="side-menu-backdrop" id="menu-backdrop"></div>
+
+      <div class="page-content">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Servicos</h2>
+              <div class="panel-subtitle">
+                Capacidades da plataforma para reduzir perdas e acelerar decisoes.
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <h3>Priorizacao automatica por risco</h3>
+              <p>
+                Validade vira ordem de acao: critico, atencao e seguro. O time sabe
+                o que atacar primeiro.
+              </p>
+            </div>
+
+            <div>
+              <h3>Tomada de decisao em tempo real</h3>
+              <p>
+                Dashboards e listas orientadas a acao mostram onde agir hoje para
+                reduzir perda e evitar multa.
+              </p>
+            </div>
+
+            <div>
+              <h3>Operacao enxuta e escalavel</h3>
+              <p>
+                Leitura EAN, cadastro simples e atualizacao em lote. Menos clique,
+                mais resultado.
+              </p>
+            </div>
+
+            <div>
+              <h3>Historico e rastreabilidade</h3>
+              <p>
+                Cada acao (vendido, retirado, lancado) fica registrada para auditoria
+                e aprendizado operacional.
+              </p>
+            </div>
+
+            <div>
+              <h3>Integracoes e automacoes</h3>
+              <p>
+                Webhooks e n8n para notificacoes, rotinas e integracao com sistemas.
+              </p>
+            </div>
+
+            <div>
+              <h3>Ecossistema e outros projetos</h3>
+              <p>
+                Solucoes conectadas que reforcam a maturidade tecnica e a visao de produto.
+              </p>
+              <ul>
+                <li>Controle de Validades (principal).</li>
+                <li>Automacoes com n8n para alertas e rotinas.</li>
+                <li>Experimentos de analise e previsao de risco.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <footer class="site-footer">
+          Desenvolvido por
+          <a href="https://www.linkedin.com/in/eliezer" target="_blank" rel="noopener">
+            Eliezer
+          </a>
+          - responsavel tecnico pela plataforma
+        </footer>
+      </div>
+    </div>
+    <script>
+      (function hideHtmlExtension() {
+        if (!window.history || !window.history.replaceState) return;
+        const { pathname, search, hash } = window.location;
+        if (!pathname.endsWith(".html")) return;
+        const cleanPath = pathname
+          .replace(/\/index\.html$/, "/")
+          .replace(/\.html$/, "");
+        window.history.replaceState({}, "", `${cleanPath}${search}${hash}`);
+      })();
+    </script>
+    <script>
+      (function setupSideMenu() {
+        const toggle = document.getElementById("menu-toggle");
+        const menu = document.getElementById("side-menu");
+        const backdrop = document.getElementById("menu-backdrop");
+        if (!toggle || !menu || !backdrop) return;
+        const setOpen = (open) => {
+          menu.classList.toggle("is-open", open);
+          menu.setAttribute("aria-hidden", open ? "false" : "true");
+          backdrop.classList.toggle("is-open", open);
+          toggle.setAttribute("aria-expanded", String(open));
+          toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+        };
+        toggle.addEventListener("click", () => setOpen(!menu.classList.contains("is-open")));
+        backdrop.addEventListener("click", () => setOpen(false));
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") setOpen(false);
+        });
+      })();
+    </script>
+  </body>
+</html>

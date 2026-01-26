@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Minha conta | Controle de Validades</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+        <div>
+          <div style="font-size: 0.95rem;">Controle de Validades</div>
+          <small>Ecossistema e produto</small>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn btn-secondary btn-sm" href="index.html">Painel</a>
+        <a class="btn btn-secondary btn-sm" href="sobre.html">Sobre</a>
+        <a class="btn btn-secondary btn-sm" href="servicos.html">Servicos</a>
+        <a class="btn btn-secondary btn-sm" href="ferramentas.html">Ferramentas</a>
+        <a class="btn btn-secondary btn-sm" href="contato.html">Contato</a>
+        <a class="btn btn-primary btn-sm" href="minha-conta.html">Minha conta</a>
+      </div>
+    </div>
+
+    <div class="page-shell">
+      <aside class="side-menu" id="side-menu" aria-hidden="true">
+        <div class="side-menu-title">Ecossistema</div>
+        <nav class="side-menu-links">
+          <a href="sales.html">Inicio</a>
+          <a href="index.html">Painel</a>
+          <a href="sobre.html">Sobre</a>
+          <a href="servicos.html">Servicos</a>
+          <a href="ferramentas.html">Ferramentas</a>
+          <a href="contato.html">Contato</a>
+          <a href="minha-conta.html" class="is-active">Minha conta</a>
+          <a href="login.html">Login</a>
+        </nav>
+      </aside>
+      <div class="side-menu-backdrop" id="menu-backdrop"></div>
+
+      <div class="page-content">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Minha conta</h2>
+              <div class="panel-subtitle">
+                As configuracoes abaixo impactam alertas, relatorios e historico de auditoria.
+              </div>
+            </div>
+            <div class="panel-plan">
+              <div class="panel-plan-label">Plano atual</div>
+              <span
+                class="plan-badge plan-free plan-tooltip"
+                id="account-plan-badge"
+                data-tooltip="Voce esta usando o plano gratuito"
+              >
+                Plano Free
+              </span>
+            </div>
+          </div>
+
+          <form class="form-grid">
+            <div>
+              <h3>Dados do usuario</h3>
+              <div class="panel-subtitle">Perfil e contato do responsavel.</div>
+            </div>
+            <div class="field">
+              <label for="conta-nome">Nome completo</label>
+              <input id="conta-nome" type="text" placeholder="Seu nome" />
+            </div>
+            <div class="field">
+              <label for="conta-email">Email</label>
+              <input id="conta-email" type="email" placeholder="voce@email.com" />
+            </div>
+            <div class="field">
+              <label for="conta-telefone">Telefone</label>
+              <input id="conta-telefone" type="tel" placeholder="(00) 00000-0000" />
+            </div>
+            <div>
+              <h3>Dados operacionais</h3>
+              <div class="panel-subtitle">Informacoes da loja e da funcao.</div>
+            </div>
+            <div class="field">
+              <label for="conta-loja">Loja</label>
+              <input id="conta-loja" type="text" placeholder="Nome da loja" />
+            </div>
+            <div class="field">
+              <label for="conta-cargo">Cargo</label>
+              <input id="conta-cargo" type="text" placeholder="Ex: Gerente" />
+            </div>
+            <div>
+              <button class="btn btn-primary" type="button">Salvar alteracoes</button>
+              <button class="btn btn-secondary" type="button">Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Seguranca</h2>
+              <div class="panel-subtitle">
+                Atualize sua senha de acesso.
+              </div>
+            </div>
+          </div>
+
+          <form class="form-grid">
+            <div class="field">
+              <label for="senha-atual">Senha atual</label>
+              <input id="senha-atual" type="password" placeholder="Digite sua senha atual" />
+            </div>
+            <div class="field">
+              <label for="senha-nova">Nova senha</label>
+              <input id="senha-nova" type="password" placeholder="Crie uma nova senha" />
+            </div>
+            <div class="field">
+              <label for="senha-confirmar">Confirmar nova senha</label>
+              <input id="senha-confirmar" type="password" placeholder="Repita a nova senha" />
+            </div>
+            <div>
+              <button class="btn btn-primary" type="button">Atualizar senha</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Preferencias de negocio</h2>
+              <div class="panel-subtitle">
+                Configure alertas, relatorios e sinais do painel.
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <label class="switch">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label">Notificacoes de vencimento critico</span>
+            </div>
+            <div data-plan="business" data-plan-feature="alerts">
+              <label class="switch">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label">Resumo diario por email</span>
+              <span
+                class="plan-badge plan-locked plan-tooltip plan-badge-inline"
+                data-plan-badge="alerts"
+                data-tooltip="Alertas por email disponiveis no plano Business"
+              >
+                Alertas Business
+              </span>
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" />
+                <span class="slider"></span>
+              </label>
+              <span class="switch-label">Alertas de produtos vendidos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function hydrateAccountFromStorage() {
+        const AUTH_KEY = "gp_auth";
+        const USER_KEY = "gp_user";
+        const nameInput = document.getElementById("conta-nome");
+        const emailInput = document.getElementById("conta-email");
+        const storeInput = document.getElementById("conta-loja");
+
+        const storedAuth = localStorage.getItem(AUTH_KEY) === "1";
+        const storedEmail = localStorage.getItem(USER_KEY) || localStorage.getItem("signup_email");
+        const storedName = localStorage.getItem("signup_name");
+        const storedCompany = localStorage.getItem("signup_company");
+
+        if (storedAuth) {
+          if (nameInput && storedName) nameInput.value = storedName;
+          if (emailInput && storedEmail) emailInput.value = storedEmail;
+          if (storeInput && storedCompany) storeInput.value = storedCompany;
+        }
+      })();
+    </script>
+    <script>
+      (function applyPlanLabels() {
+        const planType = localStorage.getItem("plan_type") === "business" ? "business" : "free";
+        const accountBadge = document.getElementById("account-plan-badge");
+        if (accountBadge) {
+          const isBusiness = planType === "business";
+          accountBadge.textContent = isBusiness ? "Plano Business" : "Plano Free";
+          accountBadge.classList.toggle("plan-free", !isBusiness);
+          accountBadge.classList.toggle("plan-business", isBusiness);
+          accountBadge.setAttribute(
+            "data-tooltip",
+            isBusiness ? "Voce esta no plano Business" : "Voce esta usando o plano gratuito"
+          );
+        }
+
+        const alertRow = document.querySelector('[data-plan-feature="alerts"]');
+        if (!alertRow) return;
+        const toggle = alertRow.querySelector('input[type="checkbox"]');
+        const badge = alertRow.querySelector("[data-plan-badge]");
+        if (planType === "business") {
+          alertRow.classList.remove("plan-locked");
+          if (toggle) toggle.disabled = false;
+          if (badge) badge.classList.add("plan-business");
+          if (badge) badge.classList.remove("plan-locked");
+          if (badge) badge.textContent = "Business";
+          if (badge) badge.setAttribute("data-tooltip", "Recurso ativo no plano Business");
+          return;
+        }
+        alertRow.classList.add("plan-locked");
+        if (toggle) toggle.disabled = true;
+      })();
+    </script>
+    <script>
+      (function hideHtmlExtension() {
+        if (!window.history || !window.history.replaceState) return;
+        const { pathname, search, hash } = window.location;
+        if (!pathname.endsWith(".html")) return;
+        const cleanPath = pathname
+          .replace(/\/index\.html$/, "/")
+          .replace(/\.html$/, "");
+        window.history.replaceState({}, "", `${cleanPath}${search}${hash}`);
+      })();
+    </script>
+    <script>
+      (function setupSideMenu() {
+        const toggle = document.getElementById("menu-toggle");
+        const menu = document.getElementById("side-menu");
+        const backdrop = document.getElementById("menu-backdrop");
+        if (!toggle || !menu || !backdrop) return;
+        const setOpen = (open) => {
+          menu.classList.toggle("is-open", open);
+          menu.setAttribute("aria-hidden", open ? "false" : "true");
+          backdrop.classList.toggle("is-open", open);
+          toggle.setAttribute("aria-expanded", String(open));
+          toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+        };
+        toggle.addEventListener("click", () => setOpen(!menu.classList.contains("is-open")));
+        backdrop.addEventListener("click", () => setOpen(false));
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") setOpen(false);
+        });
+      })();
+    </script>
+  </body>
+</html>

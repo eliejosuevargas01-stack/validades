@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contato | Controle de Validades</title>
+    <meta name="description" content="Suporte, demo e parcerias do Controle de Validades. Fale com o time e acelere sua operacao." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://controledevalidades.online/contato.html" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Controle de Validades",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Controle de validades com risco, rastreabilidade e operacao em tempo real.",
+        "url": "https://controledevalidades.online/",
+        "creator": {
+          "@type": "Person",
+          "name": "Eliezer",
+          "jobTitle": "Engenheiro de Software",
+          "sameAs": [
+            "https://www.linkedin.com/in/eliezer"
+          ]
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="brand">
+        <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+        <div>
+          <div style="font-size: 0.95rem;">Controle de Validades</div>
+          <small>Ecossistema e produto</small>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn btn-secondary btn-sm" href="index.html">Painel</a>
+        <a class="btn btn-secondary btn-sm" href="sobre.html">Sobre</a>
+        <a class="btn btn-secondary btn-sm" href="servicos.html">Servicos</a>
+        <a class="btn btn-secondary btn-sm" href="ferramentas.html">Ferramentas</a>
+        <a class="btn btn-primary btn-sm" href="contato.html">Contato</a>
+        <a class="btn btn-secondary btn-sm" href="minha-conta.html">Minha conta</a>
+      </div>
+    </div>
+
+    <div class="page-shell">
+      <aside class="side-menu" id="side-menu" aria-hidden="true">
+        <div class="side-menu-title">Ecossistema</div>
+        <nav class="side-menu-links">
+          <a href="sales.html">Inicio</a>
+          <a href="index.html">Painel</a>
+          <a href="sobre.html">Sobre</a>
+          <a href="servicos.html">Servicos</a>
+          <a href="ferramentas.html">Ferramentas</a>
+          <a href="contato.html" class="is-active">Contato</a>
+          <a href="minha-conta.html">Minha conta</a>
+          <a href="login.html">Login</a>
+        </nav>
+      </aside>
+      <div class="side-menu-backdrop" id="menu-backdrop"></div>
+
+      <div class="page-content">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Contato</h2>
+              <div class="panel-subtitle">
+                Canal para suporte e para novas oportunidades de negocio.
+              </div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <h3>Suporte e duvidas</h3>
+              <p><strong>Email:</strong> suporte@controlevalidade.online</p>
+              <p><strong>Telefone:</strong> (11) 99999-0000</p>
+              <p><strong>Horario:</strong> Segunda a sexta, 08:00 - 18:00</p>
+            </div>
+            <div>
+              <h3>Comercial, demo e parcerias</h3>
+              <p><strong>Email:</strong> contato@controlevalidade.online</p>
+              <p><strong>WhatsApp:</strong> (11) 98888-0000</p>
+              <p>Use este canal para validacao, demonstracoes e novos negocios.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Formulario rapido</h2>
+              <div class="panel-subtitle">
+                Selecione o motivo para agilizar o retorno.
+              </div>
+            </div>
+          </div>
+
+          <form class="form-grid">
+            <div class="field">
+              <label for="contato-nome">Nome</label>
+              <input id="contato-nome" type="text" placeholder="Seu nome" />
+            </div>
+            <div class="field">
+              <label for="contato-email">Email</label>
+              <input id="contato-email" type="email" placeholder="voce@email.com" />
+            </div>
+            <div class="field">
+              <label for="contato-telefone">Telefone</label>
+              <input id="contato-telefone" type="tel" placeholder="(00) 00000-0000" />
+            </div>
+            <div class="field">
+              <label for="contato-motivo">Motivo</label>
+              <select id="contato-motivo">
+                <option value="suporte">Suporte e duvidas</option>
+                <option value="comercial">Comercial e demo</option>
+                <option value="parceria">Parcerias</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="contato-assunto">Assunto</label>
+              <input id="contato-assunto" type="text" placeholder="Ex: Duvida sobre o painel" />
+            </div>
+            <div class="field">
+              <label for="contato-mensagem">Mensagem</label>
+              <textarea id="contato-mensagem" rows="5" placeholder="Conte mais detalhes"></textarea>
+            </div>
+            <div>
+              <button class="btn btn-primary" type="button">Enviar contato</button>
+            </div>
+          </form>
+        </div>
+        <footer class="site-footer">
+          Desenvolvido por
+          <a href="https://www.linkedin.com/in/eliezer" target="_blank" rel="noopener">
+            Eliezer
+          </a>
+          - responsavel tecnico pela plataforma
+        </footer>
+      </div>
+    </div>
+    <script>
+      (function hideHtmlExtension() {
+        if (!window.history || !window.history.replaceState) return;
+        const { pathname, search, hash } = window.location;
+        if (!pathname.endsWith(".html")) return;
+        const cleanPath = pathname
+          .replace(/\/index\.html$/, "/")
+          .replace(/\.html$/, "");
+        window.history.replaceState({}, "", `${cleanPath}${search}${hash}`);
+      })();
+    </script>
+    <script>
+      (function setupSideMenu() {
+        const toggle = document.getElementById("menu-toggle");
+        const menu = document.getElementById("side-menu");
+        const backdrop = document.getElementById("menu-backdrop");
+        if (!toggle || !menu || !backdrop) return;
+        const setOpen = (open) => {
+          menu.classList.toggle("is-open", open);
+          menu.setAttribute("aria-hidden", open ? "false" : "true");
+          backdrop.classList.toggle("is-open", open);
+          toggle.setAttribute("aria-expanded", String(open));
+          toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+        };
+        toggle.addEventListener("click", () => setOpen(!menu.classList.contains("is-open")));
+        backdrop.addEventListener("click", () => setOpen(false));
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") setOpen(false);
+        });
+      })();
+    </script>
+  </body>
+</html>

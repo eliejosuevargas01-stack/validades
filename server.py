@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import time
+from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
 import asyncpg
@@ -13,8 +14,9 @@ import httpx
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 app = FastAPI(title="Realtime Dashboard Gateway")
 
@@ -25,6 +27,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def not_found_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        path = request.url.path
+        if not any(path.startswith(prefix) for prefix in SKIP_HTML_PREFIXES):
+            candidate = resolve_static_path(path)
+            if candidate:
+                return FileResponse(candidate)
+    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+
 
 
 @app.on_event("startup")
@@ -58,6 +72,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "").strip()
 DB_TABLE = os.getenv("DB_TABLE", "validades").strip() or "validades"
 DB_SSLMODE = os.getenv("DB_SSLMODE", "disable").strip().lower()
 DB_POLL_INTERVAL = float(os.getenv("DB_POLL_INTERVAL", "8").strip() or 8)
+BASE_DIR = Path(__file__).resolve().parent
+SKIP_HTML_PREFIXES = ("/api", "/events", "/webhook", "/health")
 
 db_pool: Optional[asyncpg.Pool] = None
 db_poll_task: Optional[asyncio.Task] = None
@@ -86,6 +102,26 @@ def normalize_payload(payload: Any) -> Dict[str, Any]:
     if isinstance(payload, dict):
         return payload
     return {"data": payload}
+
+
+def resolve_static_path(path: str) -> Optional[Path]:
+    clean = path.strip("/")
+    if not clean:
+        candidate = BASE_DIR / "index.html"
+        return candidate if candidate.is_file() else None
+    clean = clean.rstrip("/")
+    if ".." in Path(clean).parts:
+        return None
+    candidate = BASE_DIR / clean
+    if candidate.is_file():
+        return candidate
+    if "." not in clean:
+        candidate = BASE_DIR / f"{clean}.html"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 
 
 def broadcast(payload: Dict[str, Any]) -> int:

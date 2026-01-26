@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Checkout | Controle de Validades</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script>
+      const mp = new MercadoPago("TEST-91d25206-5781-4c06-934c-c98fb7cf6066", {
+        locale: "pt-BR",
+      });
+    </script>
+    <style>
+      :root {
+        --bg-primary: #f5f7fb;
+        --accent-primary: #2563eb;
+        --accent-secondary: #06b6d4;
+        --text-primary: #0f172a;
+        --text-muted: #475569;
+        --border: rgba(15, 23, 42, 0.12);
+        --shadow: 0 16px 50px rgba(15, 23, 42, 0.12);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg-primary);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+      body::before, body::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(60px);
+        opacity: 0.6;
+        z-index: 0;
+      }
+      body::before {
+        width: 360px;
+        height: 360px;
+        background: rgba(37, 99, 235, 0.18);
+        top: -80px;
+        left: -60px;
+      }
+      body::after {
+        width: 300px;
+        height: 300px;
+        background: rgba(6, 182, 212, 0.18);
+        bottom: -60px;
+        right: -40px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 1.75rem;
+        width: min(520px, 100%);
+        position: relative;
+        z-index: 1;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .brand-logo {
+        height: 44px;
+        width: auto;
+        border-radius: 12px;
+      }
+      h1 {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+      }
+      p.lead {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+      }
+      .plan {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      .plan h2 {
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        margin-bottom: 0.35rem;
+      }
+      .plan .price {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      label {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text-primary);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+      }
+      input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      }
+      .radio-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .radio-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.6rem 0.9rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .radio-pill input { margin: 0; }
+      .hidden { display: none; }
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem;
+      }
+      .field-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.85rem;
+      }
+      .payment-details {
+        display: none;
+        flex-direction: column;
+        gap: 0.85rem;
+        padding: 0.85rem;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #f8fafc;
+      }
+      .card-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+      .card-brand img {
+        height: 20px;
+        width: auto;
+      }
+      .btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        font-weight: 700;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: #fff;
+      }
+      .status {
+        min-height: 20px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+      .status.ok { color: #16a34a; }
+      .status.err { color: #dc2626; }
+      .pix-area {
+        display: none;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.85rem;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #f8fafc;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .pix-area img {
+        max-width: 220px;
+        border-radius: 8px;
+      }
+      @media (max-width: 520px) {
+        .field-grid {
+          grid-template-columns: 1fr;
+        }
+        .field-grid-3 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="brand">
+        <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
+        <div>
+          <h1>Checkout Business</h1>
+          <p class="lead">Finalize a assinatura do plano Business.</p>
+        </div>
+      </div>
+
+      <div class="plan">
+        <h2>Plano Business</h2>
+        <div class="price">R$ 150,00 / mes</div>
+      </div>
+
+      <form id="form-checkout">
+        <div class="field">
+          <label for="checkout-name">Nome completo</label>
+          <input id="checkout-name" type="text" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="checkout-email">Email</label>
+          <input id="checkout-email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="checkout-company">Empresa</label>
+          <input id="checkout-company" type="text" autocomplete="organization" required />
+        </div>
+        <div class="field">
+          <label>Documento</label>
+          <div class="radio-group">
+            <label class="radio-pill">
+              <input type="radio" name="doc-type" value="cpf" checked />
+              CPF
+            </label>
+            <label class="radio-pill">
+              <input type="radio" name="doc-type" value="cnpj" />
+              CNPJ
+            </label>
+          </div>
+        </div>
+        <div class="field" id="cpf-field">
+          <label for="checkout-cpf">CPF</label>
+          <input
+            id="checkout-cpf"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            minlength="11"
+            maxlength="11"
+            pattern="\d{11}"
+            placeholder="Somente numeros (11 digitos)"
+            required
+          />
+        </div>
+        <div class="field hidden" id="cnpj-field">
+          <label for="checkout-cnpj">CNPJ</label>
+          <input
+            id="checkout-cnpj"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            minlength="14"
+            maxlength="14"
+            pattern="\d{14}"
+            placeholder="Somente numeros (14 digitos)"
+          />
+        </div>
+        <div class="field">
+          <label>Metodo de pagamento</label>
+          <div class="radio-group">
+            <label class="radio-pill">
+              <input type="radio" name="payment" value="pix" checked />
+              PIX
+            </label>
+            <label class="radio-pill">
+              <input type="radio" name="payment" value="card" />
+              Cartao
+            </label>
+          </div>
+        </div>
+        <div class="payment-details" id="card-details">
+          <div class="card-brand">
+            <img src="https://www.mercadopago.com/org-img/MP3/API/logos/visa.gif" alt="Visa" />
+            <span>Visa (credito)</span>
+          </div>
+          <div class="field">
+            <label for="cardholderName">Nome no cartao</label>
+            <input id="cardholderName" type="text" autocomplete="cc-name" />
+          </div>
+          <div class="field">
+            <label for="cardholderEmail">Email</label>
+            <input id="cardholderEmail" type="email" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="docNumber">CPF/CNPJ</label>
+            <input
+              id="docNumber"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="Somente numeros"
+            />
+          </div>
+          <div class="field">
+            <label for="cardNumber">Numero do cartao</label>
+            <input
+              id="cardNumber"
+              type="text"
+              inputmode="numeric"
+              autocomplete="cc-number"
+              maxlength="16"
+              placeholder="0000 0000 0000 0000"
+            />
+          </div>
+          <div class="field-grid-3">
+            <div class="field">
+              <label for="expirationMonth">MM</label>
+              <input
+                id="expirationMonth"
+                type="text"
+                inputmode="numeric"
+                autocomplete="cc-exp-month"
+                placeholder="MM"
+                maxlength="2"
+              />
+            </div>
+            <div class="field">
+              <label for="expirationYear">AA</label>
+              <input
+                id="expirationYear"
+                type="text"
+                inputmode="numeric"
+                autocomplete="cc-exp-year"
+                placeholder="AA"
+                maxlength="2"
+              />
+            </div>
+            <div class="field">
+              <label for="securityCode">CVV</label>
+              <input
+                id="securityCode"
+                type="text"
+                inputmode="numeric"
+                autocomplete="cc-csc"
+                maxlength="3"
+                placeholder="000"
+              />
+            </div>
+          </div>
+        </div>
+        <button class="btn" type="submit">Gerar checkout</button>
+        <div class="status" id="checkout-status"></div>
+        <div class="pix-area" id="pix-area"></div>
+      </form>
+    </div>
+
+    <script>
+      const AUTH_KEY = "gp_auth";
+      const USER_KEY = "gp_user";
+      const storedAuth = localStorage.getItem(AUTH_KEY) === "1";
+      const storedEmail = localStorage.getItem(USER_KEY);
+      if (!storedAuth || !storedEmail) {
+        window.location.href = "signup.html";
+      }
+
+      const nameInput = document.getElementById("checkout-name");
+      const emailInput = document.getElementById("checkout-email");
+      const companyInput = document.getElementById("checkout-company");
+      nameInput.value = localStorage.getItem("signup_name") || "";
+      emailInput.value = localStorage.getItem("signup_email") || storedEmail || "";
+      companyInput.value = localStorage.getItem("signup_company") || "";
+
+      const checkoutForm = document.getElementById("form-checkout");
+      const statusEl = document.getElementById("checkout-status");
+      const pixArea = document.getElementById("pix-area");
+      const cpfField = document.getElementById("cpf-field");
+      const cnpjField = document.getElementById("cnpj-field");
+      const cpfInput = document.getElementById("checkout-cpf");
+      const cnpjInput = document.getElementById("checkout-cnpj");
+      const docTypeInputs = Array.from(document.querySelectorAll("input[name=doc-type]"));
+      const paymentInputs = Array.from(document.querySelectorAll("input[name=payment]"));
+      const cardDetails = document.getElementById("card-details");
+      const cardHolderInput = document.getElementById("cardholderName");
+      const cardholderEmailInput = document.getElementById("cardholderEmail");
+      const docNumberInput = document.getElementById("docNumber");
+      const cardNumberInput = document.getElementById("cardNumber");
+      const expMonthInput = document.getElementById("expirationMonth");
+      const expYearInput = document.getElementById("expirationYear");
+      const cardCvvInput = document.getElementById("securityCode");
+
+      const CHECKOUT_ENDPOINTS = [
+        "https://myn8n.seommerce.shop/webhook/checkout",
+      ];
+
+      function setStatus(text, type = "") {
+        if (!statusEl) return;
+        statusEl.textContent = text;
+        statusEl.className = "status";
+        if (type === "ok") statusEl.classList.add("ok");
+        if (type === "err") statusEl.classList.add("err");
+      }
+
+      function onlyDigits(value) {
+        return (value || "").replace(/\D/g, "");
+      }
+
+      function syncNumericInput(input, maxLength) {
+        if (!input) return;
+        input.addEventListener("input", () => {
+          let digits = onlyDigits(input.value);
+          if (maxLength) digits = digits.slice(0, maxLength);
+          input.value = digits;
+        });
+      }
+
+      let isSyncingDoc = false;
+
+      function getSelectedDocType() {
+        return checkoutForm?.querySelector("input[name=doc-type]:checked")?.value || "cpf";
+      }
+
+      function setDocType(type) {
+        const useCpf = type === "cpf";
+        if (cpfField) cpfField.classList.toggle("hidden", !useCpf);
+        if (cnpjField) cnpjField.classList.toggle("hidden", useCpf);
+        if (cpfInput) cpfInput.required = useCpf;
+        if (cnpjInput) cnpjInput.required = !useCpf;
+        if (docNumberInput) {
+          docNumberInput.maxLength = useCpf ? 11 : 14;
+          docNumberInput.placeholder = useCpf ? "CPF (11 digitos)" : "CNPJ (14 digitos)";
+          syncDocNumberFromDoc();
+        }
+      }
+
+      function setPaymentMethod(method) {
+        const showCard = method === "card";
+        if (cardDetails) {
+          cardDetails.style.display = showCard ? "flex" : "none";
+        }
+        if (cardHolderInput) cardHolderInput.required = showCard;
+        if (cardholderEmailInput) cardholderEmailInput.required = showCard;
+        if (docNumberInput) docNumberInput.required = showCard;
+        if (cardNumberInput) cardNumberInput.required = showCard;
+        if (expMonthInput) expMonthInput.required = showCard;
+        if (expYearInput) expYearInput.required = showCard;
+        if (cardCvvInput) cardCvvInput.required = showCard;
+      }
+
+      docTypeInputs.forEach((input) => {
+        input.addEventListener("change", () => setDocType(input.value));
+      });
+
+      paymentInputs.forEach((input) => {
+        input.addEventListener("change", () => setPaymentMethod(input.value));
+      });
+
+      function syncDocNumberFromDoc() {
+        if (!docNumberInput || isSyncingDoc) return;
+        isSyncingDoc = true;
+        const docType = getSelectedDocType();
+        const source = docType === "cpf" ? cpfInput : cnpjInput;
+        docNumberInput.value = onlyDigits(source?.value || "").slice(0, docType === "cpf" ? 11 : 14);
+        isSyncingDoc = false;
+      }
+
+      function syncDocFromDocNumber() {
+        if (!docNumberInput || isSyncingDoc) return;
+        isSyncingDoc = true;
+        const docType = getSelectedDocType();
+        const target = docType === "cpf" ? cpfInput : cnpjInput;
+        const maxLen = docType === "cpf" ? 11 : 14;
+        const digits = onlyDigits(docNumberInput.value).slice(0, maxLen);
+        docNumberInput.value = digits;
+        if (target) {
+          target.value = digits;
+        }
+        isSyncingDoc = false;
+      }
+
+      setDocType(getSelectedDocType());
+      setPaymentMethod(document.querySelector("input[name=payment]:checked")?.value || "pix");
+
+      syncNumericInput(cpfInput, 11);
+      syncNumericInput(cnpjInput, 14);
+      syncNumericInput(cardNumberInput, 16);
+      syncNumericInput(cardCvvInput, 3);
+      syncNumericInput(expMonthInput, 2);
+      syncNumericInput(expYearInput, 2);
+
+      if (cpfInput) cpfInput.addEventListener("input", syncDocNumberFromDoc);
+      if (cnpjInput) cnpjInput.addEventListener("input", syncDocNumberFromDoc);
+      if (docNumberInput) docNumberInput.addEventListener("input", syncDocFromDocNumber);
+      if (emailInput && cardholderEmailInput) {
+        cardholderEmailInput.value = emailInput.value || "";
+        emailInput.addEventListener("input", () => {
+          cardholderEmailInput.value = emailInput.value || "";
+        });
+      }
+
+      async function postJsonWithFallback(urls, body) {
+        let lastError = null;
+        for (const url of urls) {
+          try {
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error("Erro HTTP " + res.status);
+            return res;
+          } catch (err) {
+            lastError = err;
+          }
+        }
+        throw lastError || new Error("Falha ao enviar dados.");
+      }
+
+      function extractCheckoutUrl(data) {
+        if (!data) return "";
+        if (typeof data === "string") return data;
+        return (
+          data.init_point ||
+          data.sandbox_init_point ||
+          data.checkout_url ||
+          data.url ||
+          data.link ||
+          ""
+        );
+      }
+
+      function renderPix(data) {
+        if (!pixArea) return;
+        pixArea.innerHTML = "";
+        const payload = Array.isArray(data) ? data[0] : data;
+        if (!payload || typeof payload !== "object") return;
+        const txData = payload.point_of_interaction?.transaction_data || {};
+        const qrBase64 =
+          txData.qr_code_base64 ||
+          payload.qr_code_base64 ||
+          payload.qr_base64 ||
+          "";
+        const qrCode =
+          txData.qr_code ||
+          payload.qr_code ||
+          payload.pix_code ||
+          payload.copia_e_cola ||
+          "";
+        const ticketUrl = txData.ticket_url || payload.ticket_url || "";
+        const status = payload.status || "";
+        const expiration = payload.date_of_expiration || "";
+        if (qrBase64) {
+          const img = document.createElement("img");
+          img.src = `data:image/png;base64,${qrBase64}`;
+          pixArea.appendChild(img);
+        }
+        if (qrCode) {
+          const code = document.createElement("div");
+          code.textContent = qrCode;
+          pixArea.appendChild(code);
+        }
+        if (status || expiration) {
+          const meta = document.createElement("div");
+          const statusText = status ? `Status: ${status}` : "";
+          const expText = expiration ? `Expira em: ${expiration}` : "";
+          meta.textContent = [statusText, expText].filter(Boolean).join(" | ");
+          pixArea.appendChild(meta);
+        }
+        if (ticketUrl) {
+          const link = document.createElement("a");
+          link.href = ticketUrl;
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = "Abrir boleto/PIX no Mercado Pago";
+          pixArea.appendChild(link);
+        }
+        pixArea.style.display = "flex";
+      }
+
+      checkoutForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const name = (nameInput.value || "").trim();
+        const email = (emailInput.value || "").trim();
+        const company = (companyInput.value || "").trim();
+        const paymentMethod = checkoutForm.querySelector("input[name=payment]:checked")?.value || "pix";
+        const docType = getSelectedDocType();
+        const cpf = onlyDigits(cpfInput?.value || "");
+        const cnpj = onlyDigits(cnpjInput?.value || "");
+        if (!name || !email || !company) {
+          setStatus("Preencha nome, email e empresa.", "err");
+          return;
+        }
+        if (docType === "cpf" && cpf.length !== 11) {
+          setStatus("Digite um CPF valido com 11 digitos.", "err");
+          return;
+        }
+        if (docType === "cnpj" && cnpj.length !== 14) {
+          setStatus("Digite um CNPJ valido com 14 digitos.", "err");
+          return;
+        }
+        const isValidEmail = /\S+@\S+\.\S+/.test(email);
+        if (!isValidEmail) {
+          setStatus("Digite um email valido.", "err");
+          return;
+        }
+        const businessAmount = 150;
+        let cardPayload = null;
+        let cardToken = "";
+        if (paymentMethod === "card") {
+          const holder = (cardHolderInput?.value || "").trim();
+          const holderEmail = (cardholderEmailInput?.value || "").trim();
+          const docNumber = onlyDigits(docNumberInput?.value || "");
+          const number = onlyDigits(cardNumberInput?.value || "");
+          const expMonth = onlyDigits(expMonthInput?.value || "");
+          const expYear = onlyDigits(expYearInput?.value || "");
+          const cvv = onlyDigits(cardCvvInput?.value || "");
+          const docExpectedLength = docType === "cpf" ? 11 : 14;
+          if (!holder || !holderEmail || !docNumber || !number || !expMonth || !expYear || !cvv) {
+            setStatus("Preencha os dados do cartao.", "err");
+            return;
+          }
+          if (!/\S+@\S+\.\S+/.test(holderEmail)) {
+            setStatus("Email do titular invalido.", "err");
+            return;
+          }
+          if (docNumber.length !== docExpectedLength) {
+            setStatus(`Documento invalido. Use ${docExpectedLength} digitos.`, "err");
+            return;
+          }
+          if (number.length !== 16) {
+            setStatus("Numero do cartao deve ter 16 digitos.", "err");
+            return;
+          }
+          if (expMonth.length !== 2 || expYear.length !== 2) {
+            setStatus("Validade invalida. Use MM e AA.", "err");
+            return;
+          }
+          if (cvv.length !== 3) {
+            setStatus("CVV invalido. Use 3 digitos.", "err");
+            return;
+          }
+          if (typeof mp === "undefined") {
+            setStatus("SDK do Mercado Pago nao carregou.", "err");
+            return;
+          }
+          setStatus("Gerando token do cartao...");
+          const cardData = {
+            cardNumber: number,
+            expirationMonth: expMonth,
+            expirationYear: expYear,
+            securityCode: cvv,
+            cardholderName: holder,
+            cardholderEmail: holderEmail,
+            identification: {
+              type: docType.toUpperCase(),
+              number: docNumber,
+            },
+          };
+          let tokenResponse = null;
+          try {
+            tokenResponse = await mp.createCardToken(cardData);
+          } catch (err) {
+            console.error(err);
+            setStatus("Erro ao gerar token.", "err");
+            return;
+          }
+          if (tokenResponse?.error) {
+            console.error(tokenResponse.error);
+            setStatus("Erro ao gerar token.", "err");
+            return;
+          }
+          cardToken = tokenResponse?.id || "";
+          if (!cardToken) {
+            setStatus("Token do cartao invalido.", "err");
+            return;
+          }
+          cardPayload = {
+            token: cardToken,
+            cardholder_email: holderEmail,
+            cardholder_document: docNumber,
+          };
+        }
+        setStatus("Gerando checkout...");
+        pixArea.style.display = "none";
+        try {
+          const documentNumber = docType === "cpf" ? cpf : cnpj;
+          const pixPayload =
+            paymentMethod === "pix"
+              ? {
+                  external_reference: "MP0001",
+                  seller_configuration: {
+                    notification_info: {
+                      notification_url: "http://example.com.br/notification",
+                    },
+                  },
+                  transaction: {
+                    from: {
+                      accounts: [{ amount: businessAmount }],
+                    },
+                    to: {
+                      accounts: [
+                        {
+                          type: "current",
+                          amount: businessAmount,
+                          chave: {
+                            type: docType.toUpperCase(),
+                            value: documentNumber,
+                          },
+                          owner: {
+                            identification: {
+                              type: docType.toUpperCase(),
+                              number: documentNumber,
+                            },
+                          },
+                        },
+                      ],
+                    },
+                    total_amount: businessAmount,
+                  },
+                }
+              : null;
+          let payload = null;
+          if (paymentMethod === "card") {
+            payload = {
+              token: cardToken,
+              email,
+              amount: businessAmount,
+            };
+          } else {
+            payload = {
+              reason: "Plano Business - Controle Validade",
+              auto_recurring: {
+                frequency: 1,
+                frequency_type: "months",
+                billing_day: 10,
+                billing_day_proportional: true,
+                free_trial: {
+                  frequency: 1,
+                  frequency_type: "months",
+                },
+                transaction_amount: businessAmount,
+                currency_id: "BRL",
+              },
+              back_url: "https://controlevalidade.online/",
+              payer_email: email,
+              payer_name: name,
+              payer_company: company,
+              payment_method: paymentMethod,
+              payment_method_id: "pix",
+              document_type: docType.toUpperCase(),
+              document_number: documentNumber,
+              cpf,
+              cnpj,
+              plan: "business",
+            };
+            if (pixPayload) {
+              payload.pix = pixPayload;
+            }
+          }
+          const res = await postJsonWithFallback(CHECKOUT_ENDPOINTS, payload);
+          let data = null;
+          try {
+            data = await res.json();
+          } catch (err) {
+            data = await res.text();
+          }
+          const redirectUrl = extractCheckoutUrl(data);
+          if (paymentMethod === "pix" && data) {
+            renderPix(data);
+          }
+          if (redirectUrl) {
+            setStatus("Redirecionando...", "ok");
+            window.location.href = redirectUrl;
+            return;
+          }
+          setStatus("Checkout gerado. Verifique os dados acima.", "ok");
+        } catch (err) {
+          setStatus(err.message || "Erro ao iniciar checkout.", "err");
+        }
+      });
+    </script>
+  </body>
+</html>

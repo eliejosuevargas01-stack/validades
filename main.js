@@ -52,11 +52,16 @@ const metricLaunched = document.getElementById("metric-launched");
 const metricNotLaunched = document.getElementById("metric-not-launched");
 const metricExpiredRate = document.getElementById("metric-expired-rate");
 const expiryChartCanvas = document.getElementById("chart-expiry");
+const expiredStatusChartCanvas = document.getElementById("chart-expired-status");
 const launchChartCanvas = document.getElementById("chart-launch");
 const bucketsChartCanvas = document.getElementById("chart-buckets");
 const expiryList = document.getElementById("expiry-list");
 const expiryUpdated = document.getElementById("expiry-updated");
 const expiryCount = document.getElementById("expiry-count");
+const historyList = document.getElementById("history-list");
+const historyCount = document.getElementById("history-count");
+const historyBoard = document.getElementById("history-board");
+const historyToggleBtn = document.getElementById("history-toggle-btn");
 const detailModal = document.getElementById("detail-modal");
 const detailTitle = document.getElementById("detail-title");
 const detailSubtitle = document.getElementById("detail-subtitle");
@@ -65,7 +70,26 @@ const detailList = document.getElementById("detail-list");
 const detailCloseBtn = document.getElementById("detail-close-btn");
 const metricCards = document.querySelectorAll(".metric-card[data-metric]");
 const categoryFilter = document.getElementById("category-filter");
+const tableControls = document.getElementById("table-controls");
+const tableCount = document.getElementById("table-count");
+const tableToggleBtn = document.getElementById("table-toggle-btn");
+const assistantFab = document.getElementById("assistant-fab");
+const assistantModal = document.getElementById("assistant-modal");
+const assistantCloseBtn = document.getElementById("assistant-close-btn");
+const assistantMessages = document.getElementById("assistant-messages");
+const assistantInput = document.getElementById("assistant-input");
+const assistantSendBtn = document.getElementById("assistant-send-btn");
+const assistantStatus = document.getElementById("assistant-status");
+const menuToggle = document.getElementById("menu-toggle");
+const sideMenu = document.getElementById("side-menu");
+const menuBackdrop = document.getElementById("menu-backdrop");
+const planBadge = document.getElementById("plan-badge");
+const planCta = document.getElementById("plan-cta");
+const planLimitBanner = document.getElementById("plan-limit-banner");
 const ENV_KEY = "gp_env";
+const PLAN_KEY = "plan_type";
+const PLAN_FREE = "free";
+const PLAN_BUSINESS = "business";
 let currentEnv = localStorage.getItem(ENV_KEY) === "test" ? "test" : "prod";
 
 const styleEl = document.createElement("style");
@@ -92,6 +116,125 @@ styleEl.textContent = `
 `;
 document.head.appendChild(styleEl);
 
+function getPlanType() {
+  return localStorage.getItem(PLAN_KEY) === PLAN_BUSINESS ? PLAN_BUSINESS : PLAN_FREE;
+}
+
+function isBusinessPlan() {
+  return getPlanType() === PLAN_BUSINESS;
+}
+
+function updatePlanBadge() {
+  if (!planBadge) return;
+  if (!localStorage.getItem(PLAN_KEY)) {
+    localStorage.setItem(PLAN_KEY, PLAN_FREE);
+  }
+  const business = isBusinessPlan();
+  planBadge.textContent = business ? "Plano Business" : "Plano Free";
+  planBadge.classList.toggle("plan-free", !business);
+  planBadge.classList.toggle("plan-business", business);
+  planBadge.setAttribute(
+    "data-tooltip",
+    business ? "Voce esta no plano Business" : "Voce esta usando o plano gratuito"
+  );
+  if (business && planCta) {
+    planCta.classList.remove("is-visible");
+    planCta.innerHTML = "";
+  }
+}
+
+function showPlanCta(message, ctaText = "Melhorar plano") {
+  if (!planCta) return;
+  planCta.innerHTML = "";
+  const text = document.createElement("span");
+  text.textContent = message;
+  const link = document.createElement("a");
+  link.href = "planos.html";
+  link.className = "btn btn-primary btn-xs";
+  link.textContent = ctaText;
+  planCta.appendChild(text);
+  planCta.appendChild(link);
+  planCta.classList.add("is-visible");
+}
+
+function applyPlanLocks() {
+  const business = isBusinessPlan();
+  const featureMessages = {
+    export: "Exportacao disponivel no plano Business.",
+    import: "Importacao automatica disponivel no plano Business.",
+    history: "Historico completo no plano Business.",
+    period: "Filtros de periodo e historico completo no Business.",
+  };
+  document.querySelectorAll("[data-plan='business']").forEach((el) => {
+    const feature = el.getAttribute("data-plan-feature") || "business";
+    const mode = el.getAttribute("data-plan-mode") || "hard";
+    if (business) {
+      el.classList.remove("plan-locked", "plan-tooltip");
+      el.removeAttribute("data-tooltip");
+      el.removeAttribute("aria-disabled");
+      if (el.type === "button") el.disabled = false;
+      return;
+    }
+    el.classList.add("plan-locked", "plan-tooltip");
+    el.setAttribute("aria-disabled", "true");
+    el.setAttribute(
+      "data-tooltip",
+      featureMessages[feature] || "Disponivel no plano Business."
+    );
+    if (el.tagName === "BUTTON") {
+      el.disabled = false;
+    }
+    if (!el.dataset.planBound) {
+      el.addEventListener("click", (event) => {
+        if (isBusinessPlan()) return;
+        if (mode !== "soft") {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        showPlanCta(featureMessages[feature] || "Disponivel no plano Business.");
+      });
+      el.dataset.planBound = "1";
+    }
+  });
+
+  document.querySelectorAll("[data-plan-badge]").forEach((badge) => {
+    if (business) {
+      badge.classList.remove("plan-locked");
+      badge.classList.add("plan-business");
+      badge.style.display = "none";
+    } else {
+      badge.classList.add("plan-locked");
+      badge.classList.remove("plan-business");
+      badge.style.display = "inline-flex";
+    }
+  });
+}
+
+function updatePlanLimitBanner(total) {
+  if (!planLimitBanner) return;
+  if (isBusinessPlan()) {
+    planLimitBanner.classList.remove("is-visible");
+    planLimitBanner.textContent = "";
+    return;
+  }
+  if (total < 50) {
+    planLimitBanner.classList.remove("is-visible");
+    planLimitBanner.textContent = "";
+    return;
+  }
+  planLimitBanner.innerHTML = "";
+  const text = document.createElement("span");
+  text.textContent =
+    "Limite do plano Free atingido: 50 produtos por mes. No Business, produtos ilimitados, importacao e exportacao.";
+  const link = document.createElement("a");
+  link.href = "planos.html";
+  link.className = "btn btn-primary btn-xs";
+  link.textContent = "Melhorar plano";
+  planLimitBanner.appendChild(text);
+  planLimitBanner.appendChild(link);
+  planLimitBanner.classList.add("is-visible");
+}
+
 const DELETE_PASSWORD_KEY = "gp_delete_password";
 let renderedRowMap = new Map();
 let selectedRowKeys = new Set();
@@ -105,12 +248,35 @@ const BASE_VERSION = "1.3.9";
 const EXPIRY_WINDOW_DAYS = 30;
 const EXPIRY_PAST_DAYS = 30;
 const EXPIRY_NEAR_DAYS = 7;
-const MAX_EXPIRY_ITEMS = 18;
+const MAX_EXPIRY_ITEMS = 8;
+const HISTORY_FREE_LIMIT = 6;
 const MAX_DETAIL_ITEMS = 200;
+const TABLE_DEFAULT_LIMIT = 10;
 const CATEGORY_FILTER_KEY = "gp_category_filter";
 const CATEGORY_ALL_VALUE = "__all__";
+const REALTIME_URL_KEY = "gp_realtime_url";
+const REALTIME_FALLBACK_MS = 5000;
 let selectedCategory =
   localStorage.getItem(CATEGORY_FILTER_KEY) || CATEGORY_ALL_VALUE;
+
+let expiryExpanded = false;
+let lastExpiryItems = [];
+let expiryToggleBtn = null;
+let expiryActions = null;
+let actionMenuListenerSet = false;
+let tableExpanded = false;
+let historyExpanded = false;
+let lastHistoryCount = 0;
+let assistantBusy = false;
+let assistantHasGreeted = false;
+
+function closeActionMenus() {
+  document.querySelectorAll(".actions-cell.actions-open").forEach((cell) => {
+    cell.classList.remove("actions-open");
+    const toggle = cell.querySelector(".actions-toggle");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+  });
+}
 
 function setVersionBadge(versionText = BASE_VERSION) {
   if (versionBadge) {
@@ -126,9 +292,14 @@ const isAuthenticated = localStorage.getItem(AUTH_KEY) === "1";
 const currentUserEmail = localStorage.getItem(USER_KEY) || "";
 
 let expiryChart = null;
+let expiredStatusChart = null;
 let launchChart = null;
 let bucketsChart = null;
 let realtimeRefreshTimer = null;
+let realtimeSource = null;
+let realtimeConnected = false;
+let realtimeFallbackTimer = null;
+let lastDataUpdateAt = 0;
 let isRefreshing = false;
 let lastPlanilhaSignature = null;
 
@@ -160,6 +331,64 @@ if (testWebhooksBtn) {
   testWebhooksBtn.addEventListener("click", testWebhooks);
   testWebhooksBtn.disabled = true;
   testWebhooksBtn.title = "Teste de webhooks temporariamente desabilitado";
+}
+
+function setSideMenuOpen(open) {
+  if (!sideMenu) return;
+  const isOpen = Boolean(open);
+  sideMenu.classList.toggle("is-open", isOpen);
+  sideMenu.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  if (menuBackdrop) {
+    menuBackdrop.classList.toggle("is-open", isOpen);
+  }
+  if (menuToggle) {
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+    menuToggle.setAttribute("aria-label", isOpen ? "Fechar menu" : "Abrir menu");
+  }
+}
+
+if (menuToggle) {
+  menuToggle.addEventListener("click", () => {
+    const isOpen = sideMenu?.classList.contains("is-open");
+    setSideMenuOpen(!isOpen);
+  });
+}
+
+if (menuBackdrop) {
+  menuBackdrop.addEventListener("click", () => setSideMenuOpen(false));
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setSideMenuOpen(false);
+});
+
+if (assistantFab) {
+  assistantFab.addEventListener("click", () => toggleAssistant(true));
+}
+
+if (assistantCloseBtn) {
+  assistantCloseBtn.addEventListener("click", () => toggleAssistant(false));
+}
+
+if (assistantModal) {
+  assistantModal.addEventListener("click", (event) => {
+    if (event.target === assistantModal) {
+      toggleAssistant(false);
+    }
+  });
+}
+
+if (assistantSendBtn) {
+  assistantSendBtn.addEventListener("click", sendAssistantMessage);
+}
+
+if (assistantInput) {
+  assistantInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      sendAssistantMessage();
+    }
+  });
 }
 
 if (editTroca) {
@@ -212,6 +441,9 @@ const PROD_ENDPOINTS = {
   actions: preferExternal
     ? ["https://myn8n.seommerce.shop/webhook/a%C3%A7%C3%B5es", "/api/acoes"]
     : ["/api/acoes", "https://myn8n.seommerce.shop/webhook/a%C3%A7%C3%B5es"],
+  assistente: preferExternal
+    ? ["https://myn8n.seommerce.shop/webhook/assistente", "/api/assistente"]
+    : ["/api/assistente", "https://myn8n.seommerce.shop/webhook/assistente"],
 };
 
 const TEST_ENDPOINTS = {
@@ -221,6 +453,7 @@ const TEST_ENDPOINTS = {
   produto: ["https://myn8n.seommerce.shop/webhook-test/validade"],
   barcode: ["https://myn8n.seommerce.shop/webhook-test/barcode"],
   actions: ["https://myn8n.seommerce.shop/webhook-test/a%C3%A7%C3%B5es"],
+  assistente: ["https://myn8n.seommerce.shop/webhook-test/assistente"],
 };
 
 function setEnvironment(env) {
@@ -238,9 +471,114 @@ function getEndpoints(key) {
   return envSet[key] || [];
 }
 
+function getRealtimeEndpoints() {
+  const override = localStorage.getItem(REALTIME_URL_KEY);
+  if (override) return [override];
+  return preferExternal
+    ? ["https://controlevalidade.online/events", "/events"]
+    : ["/events"];
+}
+
 function getUserPayload() {
   if (!currentUserEmail) return {};
   return { user: currentUserEmail, email: currentUserEmail };
+}
+
+function appendAssistantMessage(text, role = "bot") {
+  if (!assistantMessages) return;
+  const message = document.createElement("div");
+  message.className = `assistant-message ${role === "user" ? "from-user" : "from-bot"}`.trim();
+  const bubble = document.createElement("div");
+  bubble.className = "assistant-bubble";
+  bubble.textContent = text;
+  message.appendChild(bubble);
+  assistantMessages.appendChild(message);
+  assistantMessages.scrollTop = assistantMessages.scrollHeight;
+}
+
+function setAssistantStatus(text = "", tone = "") {
+  if (!assistantStatus) return;
+  assistantStatus.textContent = text;
+  assistantStatus.className = "assistant-status";
+  if (tone) assistantStatus.classList.add(tone);
+}
+
+function toggleAssistant(open) {
+  if (!assistantModal) return;
+  const shouldOpen = open === undefined ? !assistantModal.classList.contains("is-open") : open;
+  assistantModal.classList.toggle("is-open", shouldOpen);
+  assistantModal.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+  if (shouldOpen && assistantInput) {
+    if (!assistantHasGreeted) {
+      appendAssistantMessage("Ola! Como posso ajudar?");
+      assistantHasGreeted = true;
+    }
+    assistantInput.focus();
+  }
+}
+
+function extractAssistantReply(data) {
+  if (data === null || data === undefined) return "";
+  if (typeof data === "string") return data;
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const parsed = extractAssistantReply(item);
+      if (parsed) return parsed;
+    }
+    return "";
+  }
+  if (typeof data === "object") {
+    return (
+      data.reply ||
+      data.message ||
+      data.text ||
+      data.answer ||
+      data.output ||
+      extractAssistantReply(data.data) ||
+      ""
+    );
+  }
+  return "";
+}
+
+async function sendAssistantMessage() {
+  if (!assistantInput || assistantBusy) return;
+  const text = assistantInput.value.trim();
+  if (!text) return;
+  assistantInput.value = "";
+  appendAssistantMessage(text, "user");
+  setAssistantStatus("Enviando...");
+  assistantBusy = true;
+  if (assistantSendBtn) assistantSendBtn.disabled = true;
+  if (assistantInput) assistantInput.disabled = true;
+
+  const payload = {
+    message: text,
+    page: window.location.pathname,
+    timestamp: new Date().toISOString(),
+    source: "assistant",
+    ...getUserPayload(),
+  };
+
+  try {
+    const response = await postJsonWithFallback(getEndpoints("assistente"), payload);
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (err) {
+      data = await response.text();
+    }
+    const reply = extractAssistantReply(data) || "Mensagem recebida.";
+    appendAssistantMessage(reply, "bot");
+    setAssistantStatus("");
+  } catch (err) {
+    appendAssistantMessage("Nao foi possivel enviar agora. Tente novamente.", "bot");
+    setAssistantStatus("Falha ao enviar.", "err");
+  } finally {
+    assistantBusy = false;
+    if (assistantSendBtn) assistantSendBtn.disabled = false;
+    if (assistantInput) assistantInput.disabled = false;
+  }
 }
 
 async function testWebhooks() {
@@ -342,6 +680,52 @@ async function postFormWithFallback(urls, formData) {
   throw lastError || new Error(`Falha ao enviar produto. Tentativas: ${attempts.join(" | ")}`);
 }
 
+function resolveResponseOk(response, data) {
+  let ok = Boolean(response && response.ok);
+  if (!data || typeof data !== "object") return ok;
+  const okFlag = data.ok ?? data.success;
+  if (okFlag === true) return true;
+  if (okFlag === false) return false;
+  const status = typeof data.status === "string" ? data.status.toLowerCase() : "";
+  if (["ok", "success", "sucesso"].includes(status)) return true;
+  if (["error", "erro", "failed", "fail"].includes(status)) return false;
+  if ((data.error || data.errors || data.detail) && okFlag !== true) return false;
+  return ok;
+}
+
+function resolveResponseMessage(data) {
+  if (!data) return "";
+  if (typeof data === "string") return data;
+  if (typeof data.message === "string") return data.message;
+  if (typeof data.msg === "string") return data.msg;
+  if (typeof data.detail === "string") return data.detail;
+  if (typeof data.error === "string") return data.error;
+  if (Array.isArray(data.errors)) return data.errors.join(", ");
+  if (typeof data.status === "string") return data.status;
+  return "";
+}
+
+async function parseActionResponse(response) {
+  if (!response) {
+    return { ok: false, message: "Sem resposta do servidor.", data: null };
+  }
+  const contentType = response.headers?.get?.("content-type") || "";
+  let data = null;
+  if (contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {}
+  } else {
+    try {
+      const text = await response.text();
+      if (text) data = { message: text };
+    } catch {}
+  }
+  const ok = resolveResponseOk(response, data);
+  const message = resolveResponseMessage(data) || (!ok ? `Erro HTTP ${response.status}` : "");
+  return { ok, message, data };
+}
+
 function normalizeProductEntry(entry = {}) {
   return {
     id: entry.id ?? "",
@@ -352,8 +736,8 @@ function normalizeProductEntry(entry = {}) {
     ean: entry.ean ?? entry.codigo ?? "",
     troca: toBoolean(entry.troca, false),
     lancado: toBoolean(entry.lancado ?? entry["lançado"], false),
-    vendido: toBoolean(entry.vendido, false),
-    retirado: toBoolean(entry.retirado, false),
+    vendido: isFlagTrue(entry.vendido, ["vend"]),
+    retirado: isFlagTrue(entry.retirado, ["retir"]),
     rotatividade_alta: toBoolean(entry.rotatividade_alta ?? entry.rotatividade, false),
     data_lancado: entry.data_lancado ?? entry.dataLancado ?? "",
     adicionado_em: entry.adicionado_em ?? entry.criado_em ?? "",
@@ -748,6 +1132,9 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
         renderSheet(sheetName, { reuseTable: isRealtime });
         statusEl.textContent = "Planilha carregada com sucesso.";
         updateDashboardFromSheet();
+        if (!isBusinessPlan() && !isRealtime) {
+          showPlanCta("Importacao automatica e exportacao completa no plano Business.");
+        }
         return true;
       } catch (err) {
         return false;
@@ -795,6 +1182,9 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
     renderSheet(workbook.SheetNames[0], { reuseTable: isRealtime });
     statusEl.textContent = "Planilha carregada com sucesso.";
     updateDashboardFromSheet();
+    if (!isBusinessPlan() && !isRealtime) {
+      showPlanCta("Importacao automatica e exportacao completa no plano Business.");
+    }
   } catch (err) {
     console.error(err);
     statusEl.textContent = `Erro ao buscar planilha: ${err.message}`;
@@ -819,6 +1209,22 @@ sheetSelect.addEventListener("change", () => {
   if (!workbook) return;
   renderSheet(sheetSelect.value);
 });
+
+if (tableToggleBtn) {
+  tableToggleBtn.addEventListener("click", () => {
+    if (!workbook) return;
+    tableExpanded = !tableExpanded;
+    const targetSheet = sheetSelect.value || workbook.SheetNames[0];
+    renderSheet(targetSheet, { reuseTable: true });
+  });
+}
+
+if (historyToggleBtn) {
+  historyToggleBtn.addEventListener("click", () => {
+    historyExpanded = !historyExpanded;
+    updateHistoryToggle(lastHistoryCount);
+  });
+}
 
 const BR_TIMEZONE = "America/Sao_Paulo";
 const brDateFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -916,6 +1322,22 @@ function formatCellValue(value) {
   return value ?? "";
 }
 
+function formatDateOnly(value) {
+  const parsed = tryParseDate(value);
+  if (!parsed?.date) return "";
+  const year = parsed.parts?.year ?? parsed.date.getUTCFullYear();
+  const month = parsed.parts?.month ?? parsed.date.getUTCMonth() + 1;
+  const day = parsed.parts?.day ?? parsed.date.getUTCDate();
+  return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
+}
+
+function formatExpiryDays(days) {
+  if (days === null || days === undefined) return "";
+  if (days < 0) return `Vencido há ${Math.abs(days)} dia(s)`;
+  if (days === 0) return "Vence hoje";
+  return `Faltam ${days} dia(s)`;
+}
+
 function getExpiryMeta(value) {
   const parsed = tryParseDate(value);
   if (!parsed?.date) return null;
@@ -943,13 +1365,33 @@ function getExpiryMeta(value) {
   return { days, tag, color };
 }
 
+function getExpiryStatusTag(days) {
+  if (days === null || days === undefined) return null;
+  if (days < 0) return { label: "Vencido", className: "tag-critical" };
+  if (days <= 3) return { label: "Crítico", className: "tag-critical" };
+  if (days <= 30) return { label: "Atenção", className: "tag-warning" };
+  return { label: "Seguro", className: "tag-safe" };
+}
+
 function toBoolean(value, defaultValue = false) {
   if (typeof value === "boolean") return value;
   if (value === undefined || value === null || value === "") return defaultValue;
+  if (typeof value === "number") return value !== 0;
   const normalized = String(value).toLowerCase().trim();
+  if (normalized === "t") return true;
+  if (normalized === "f") return false;
+  if (["1", "sim", "yes", "y", "on"].includes(normalized)) return true;
+  if (["0", "nao", "não", "no", "off"].includes(normalized)) return false;
   if (normalized === "true") return true;
   if (normalized === "false") return false;
   return defaultValue;
+}
+
+function isFlagTrue(value, keywords = []) {
+  if (toBoolean(value, false)) return true;
+  if (typeof value !== "string") return false;
+  const normalized = value.toLowerCase().trim();
+  return keywords.some((key) => normalized.includes(key));
 }
 
 function booleanLabel(value, defaultValue = false) {
@@ -994,6 +1436,16 @@ function getExpiryDays(value) {
   return Math.floor(diffMs / (24 * 3600 * 1000));
 }
 
+function formatChartTooltip(context) {
+  const label = context.label || "";
+  const rawValue = Number(context.raw) || 0;
+  const data =
+    context.chart?.data?.datasets?.[context.datasetIndex]?.data || [];
+  const total = data.reduce((sum, val) => sum + (Number(val) || 0), 0);
+  const percent = total ? Math.round((rawValue / total) * 100) : 0;
+  return `${label}: ${rawValue} (${percent}%)`;
+}
+
 function isRowEmpty(row) {
   if (!row) return true;
   return row.every(
@@ -1003,9 +1455,11 @@ function isRowEmpty(row) {
 
 function initCharts() {
   if (!window.Chart) return;
-  if (expiryChart || launchChart || bucketsChart) return;
+  const shouldInit =
+    !expiryChart || !expiredStatusChart || !launchChart || !bucketsChart;
+  if (!shouldInit) return;
 
-  if (expiryChartCanvas) {
+  if (expiryChartCanvas && !expiryChart) {
     expiryChart = new Chart(expiryChartCanvas, {
       type: "doughnut",
       data: {
@@ -1018,8 +1472,15 @@ function initCharts() {
         ],
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { position: "bottom" },
+          tooltip: {
+            callbacks: {
+              label: formatChartTooltip,
+            },
+          },
         },
         onClick: (evt, elements) => {
           if (!elements.length) return;
@@ -1046,7 +1507,61 @@ function initCharts() {
     });
   }
 
-  if (launchChartCanvas) {
+  if (expiredStatusChartCanvas && !expiredStatusChart) {
+    expiredStatusChart = new Chart(expiredStatusChartCanvas, {
+      type: "doughnut",
+      data: {
+        labels: ["Ainda na área", "Vendidos", "Retirados"],
+        datasets: [
+          {
+            data: [0, 0, 0],
+            backgroundColor: ["#ef4444", "#60a5fa", "#94a3b8"],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" },
+          tooltip: {
+            callbacks: {
+              label: formatChartTooltip,
+            },
+          },
+        },
+        onClick: (evt, elements) => {
+          if (!elements.length) return;
+          const index = elements[0].index;
+          if (index === 0) {
+            showDetailsForKey(
+              "expired-risk",
+              "Vencidos: ainda na área",
+              "Itens vencidos sem vendido/retirado."
+            );
+          } else if (index === 1) {
+            showDetailsForKey(
+              "expired-sold",
+              "Vencidos vendidos",
+              "Itens vencidos marcados como vendidos."
+            );
+          } else if (index === 2) {
+            showDetailsForKey(
+              "expired-removed",
+              "Vencidos retirados",
+              "Itens vencidos marcados como retirados."
+            );
+          }
+        },
+        onHover: (evt, elements) => {
+          const target = evt?.native?.target;
+          if (target) target.style.cursor = elements.length ? "pointer" : "default";
+        },
+      },
+    });
+  }
+
+  if (launchChartCanvas && !launchChart) {
     launchChart = new Chart(launchChartCanvas, {
       type: "pie",
       data: {
@@ -1059,8 +1574,15 @@ function initCharts() {
         ],
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { position: "bottom" },
+          tooltip: {
+            callbacks: {
+              label: formatChartTooltip,
+            },
+          },
         },
         onClick: (evt, elements) => {
           if (!elements.length) return;
@@ -1087,7 +1609,7 @@ function initCharts() {
     });
   }
 
-  if (bucketsChartCanvas) {
+  if (bucketsChartCanvas && !bucketsChart) {
     bucketsChart = new Chart(bucketsChartCanvas, {
       type: "bar",
       data: {
@@ -1102,8 +1624,15 @@ function initCharts() {
         ],
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: formatChartTooltip,
+            },
+          },
         },
         scales: {
           y: { beginAtZero: true },
@@ -1184,8 +1713,7 @@ function renderExpiryList(items) {
 
     const date = document.createElement("div");
     date.className = "expiry-date";
-    const prefix = item.days < 0 ? "Venceu em" : "Vence em";
-    date.textContent = `${prefix} ${item.validade || "--"}`;
+    date.textContent = `Validade: ${item.validade || "--"}`;
 
     const chips = document.createElement("div");
     chips.className = "expiry-chips";
@@ -1211,6 +1739,184 @@ function renderExpiryList(items) {
   });
 }
 
+function renderHistoryList(items) {
+  if (!historyList) return;
+  historyList.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "history-empty";
+    empty.textContent = "Nenhum item no histórico.";
+    historyList.appendChild(empty);
+    return;
+  }
+
+  const business = isBusinessPlan();
+  const visibleItems = business ? items : items.slice(0, HISTORY_FREE_LIMIT);
+  visibleItems.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "history-item";
+    if (item.payload) {
+      card.classList.add("is-clickable");
+      card.addEventListener("click", () => {
+        openDetailModal({
+          title: item.nome || "Detalhes do produto",
+          subtitle: item.statusLabel || "Histórico",
+          items: [item.payload],
+        });
+      });
+    }
+
+    const top = document.createElement("div");
+    top.className = "expiry-item-top";
+    const name = document.createElement("div");
+    name.className = "expiry-name";
+    name.textContent = item.nome || "Produto sem nome";
+    const tag = document.createElement("div");
+    tag.className = "history-tag";
+    tag.textContent = item.statusLabel || "Histórico";
+    top.appendChild(name);
+    top.appendChild(tag);
+
+    const date = document.createElement("div");
+    date.className = "expiry-date";
+    date.textContent = `Validade: ${item.validade || "--"}`;
+
+    const chips = document.createElement("div");
+    chips.className = "expiry-chips";
+    const addChip = (text) => {
+      const chip = document.createElement("span");
+      chip.className = "expiry-chip";
+      chip.textContent = text;
+      chips.appendChild(chip);
+    };
+    if (item.categoria) addChip(`Categoria: ${item.categoria}`);
+    if (item.quantidade !== "" && item.quantidade !== null && item.quantidade !== undefined) {
+      addChip(`Qtd: ${item.quantidade}`);
+    }
+    if (item.ean) addChip(`EAN: ${item.ean}`);
+
+    card.appendChild(top);
+    card.appendChild(date);
+    if (chips.childElementCount) {
+      card.appendChild(chips);
+    }
+
+    historyList.appendChild(card);
+  });
+
+  if (!business && items.length > HISTORY_FREE_LIMIT) {
+    const upsell = document.createElement("div");
+    upsell.className = "history-empty plan-upsell";
+    const text = document.createElement("div");
+    text.textContent = "Historico completo disponivel no plano Business.";
+    const link = document.createElement("a");
+    link.href = "planos.html";
+    link.textContent = "Ver planos";
+    upsell.appendChild(text);
+    upsell.appendChild(link);
+    historyList.appendChild(upsell);
+  }
+}
+
+function ensureExpiryActions() {
+  if (!expiryList) return;
+  const board = expiryList.closest(".expiry-board") || expiryList.parentElement;
+  if (!board) return;
+  if (!expiryActions) {
+    expiryActions = document.createElement("div");
+    expiryActions.className = "expiry-actions";
+    expiryActions.id = "expiry-actions";
+    board.appendChild(expiryActions);
+  }
+  if (!expiryToggleBtn) {
+    expiryToggleBtn = document.createElement("button");
+    expiryToggleBtn.type = "button";
+    expiryToggleBtn.className = "btn btn-secondary btn-sm";
+    expiryToggleBtn.addEventListener("click", () => {
+      expiryExpanded = !expiryExpanded;
+      updateExpiryView(lastExpiryItems);
+    });
+    expiryActions.appendChild(expiryToggleBtn);
+  }
+}
+
+function updateExpiryToggle(totalCount, visibleCount) {
+  ensureExpiryActions();
+  if (!expiryActions || !expiryToggleBtn) return;
+  const hasMore = totalCount > MAX_EXPIRY_ITEMS;
+  if (!hasMore) {
+    expiryExpanded = false;
+    expiryActions.style.display = "none";
+    return;
+  }
+  expiryActions.style.display = "flex";
+  const hiddenCount = Math.max(totalCount - visibleCount, 0);
+  expiryToggleBtn.textContent = expiryExpanded
+    ? "Mostrar menos"
+    : `Mostrar mais (${hiddenCount})`;
+  expiryToggleBtn.setAttribute("aria-expanded", String(expiryExpanded));
+}
+
+function updateExpiryView(items) {
+  lastExpiryItems = items.slice();
+  const totalCount = items.length;
+  const limit = expiryExpanded ? totalCount : MAX_EXPIRY_ITEMS;
+  const visible = items.slice(0, limit);
+  renderExpiryList(visible);
+  if (expiryCount) {
+    if (!totalCount) {
+      expiryCount.textContent = "Nenhum item crítico";
+    } else if (totalCount > visible.length) {
+      expiryCount.textContent = `Mostrando ${visible.length} de ${totalCount} itens`;
+    } else {
+      expiryCount.textContent = `${totalCount} item(s) críticos`;
+    }
+  }
+  updateExpiryToggle(totalCount, visible.length);
+}
+
+function updateTableControls(totalCount, visibleCount) {
+  if (!tableControls || !tableToggleBtn || !tableCount) return;
+  if (!totalCount) {
+    tableControls.style.display = "none";
+    return;
+  }
+  tableControls.style.display = "flex";
+  if (totalCount <= TABLE_DEFAULT_LIMIT) {
+    tableToggleBtn.style.display = "none";
+    tableExpanded = false;
+  } else {
+    tableToggleBtn.style.display = "inline-flex";
+    tableToggleBtn.textContent = tableExpanded ? "Mostrar menos" : "Mostrar todos";
+    tableToggleBtn.setAttribute("aria-expanded", String(tableExpanded));
+  }
+  if (totalCount > visibleCount) {
+    tableCount.textContent = `Mostrando ${visibleCount} de ${totalCount} produtos`;
+  } else {
+    tableCount.textContent = `${totalCount} produto(s)`;
+  }
+}
+
+function updateHistoryToggle(totalCount) {
+  if (!historyBoard || !historyToggleBtn || !historyCount) return;
+  if (!totalCount) {
+    historyBoard.style.display = "none";
+    historyExpanded = false;
+    return;
+  }
+  const business = isBusinessPlan();
+  const visibleCount = business ? totalCount : Math.min(totalCount, HISTORY_FREE_LIMIT);
+  historyBoard.style.display = "block";
+  historyBoard.classList.toggle("is-collapsed", !historyExpanded);
+  if (!business && totalCount > visibleCount) {
+    historyCount.textContent = `Mostrando ${visibleCount} de ${totalCount} itens`;
+  } else {
+    historyCount.textContent = `${totalCount} item(s)`;
+  }
+  historyToggleBtn.textContent = historyExpanded ? "Ocultar histórico" : "Mostrar histórico";
+  historyToggleBtn.setAttribute("aria-expanded", String(historyExpanded));
+}
+
 function closeDetailModal() {
   if (!detailModal) return;
   detailModal.style.display = "none";
@@ -1218,6 +1924,11 @@ function closeDetailModal() {
 
 function sortProductsForDetail(items) {
   return items.slice().sort((a, b) => {
+    const aArchived = isProductSold(a) || isProductRemoved(a);
+    const bArchived = isProductSold(b) || isProductRemoved(b);
+    if (aArchived !== bArchived) {
+      return aArchived ? 1 : -1;
+    }
     const aDays = getExpiryDays(a.validade);
     const bDays = getExpiryDays(b.validade);
     if (aDays === null && bDays === null) {
@@ -1243,8 +1954,11 @@ function renderDetailList(items) {
 
   items.forEach((product) => {
     const card = document.createElement("div");
-    const meta = getExpiryMeta(product.validade);
-    const colorClass = meta?.color || "";
+    const isArchived = isProductSold(product) || isProductRemoved(product);
+    const meta = isArchived ? null : getExpiryMeta(product.validade);
+    const colorClass = isArchived ? "history" : meta?.color || "";
+    const days = getExpiryDays(product.validade);
+    const isExpired = days !== null && days < 0;
     card.className = `detail-item ${colorClass}`.trim();
 
     const top = document.createElement("div");
@@ -1256,7 +1970,13 @@ function renderDetailList(items) {
 
     const badge = document.createElement("span");
     badge.className = "detail-badge";
-    if (meta) {
+    if (isArchived) {
+      badge.textContent = isProductRemoved(product) ? "Retirado" : "Vendido";
+      badge.classList.add("history-badge");
+    } else if (isExpired) {
+      badge.textContent = "Ainda na área";
+      badge.classList.add("expiry-red");
+    } else if (meta) {
       badge.textContent = meta.tag;
       badge.classList.add(meta.color);
     } else {
@@ -1292,39 +2012,40 @@ function renderDetailList(items) {
     addTag(`Rotatividade: ${booleanLabel(product.rotatividade_alta, false)}`);
     addTag(`Lançado: ${booleanLabel(product.lancado, false)}`);
 
-    const actions = document.createElement("div");
-    actions.className = "detail-actions";
-    const makeBtn = (label, className, handler) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = `btn btn-xs ${className}`;
-      btn.textContent = label;
-      btn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        handler();
-      });
-      return btn;
-    };
-    actions.appendChild(
-      makeBtn("Editar", "btn-secondary", () => openEditModal(product))
-    );
-    actions.appendChild(
-      makeBtn("Lançar", "btn-success", () => launchTargets([product]))
-    );
-    actions.appendChild(
-      makeBtn("Vendido", "btn-success", () => markSoldTargets([product]))
-    );
-    actions.appendChild(
-      makeBtn("Retirado", "btn-secondary", () => markRemovedTargets([product]))
-    );
-    actions.appendChild(
-      makeBtn("Eliminar", "btn-error", () => deleteTargets([product]))
-    );
-
     card.appendChild(top);
     card.appendChild(date);
     card.appendChild(tags);
-    card.appendChild(actions);
+    if (!isArchived) {
+      const actions = document.createElement("div");
+      actions.className = "detail-actions";
+      const makeBtn = (label, className, handler) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `btn btn-xs ${className}`;
+        btn.textContent = label;
+        btn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          handler();
+        });
+        return btn;
+      };
+      actions.appendChild(
+        makeBtn("Editar", "btn-secondary", () => openEditModal(product))
+      );
+      actions.appendChild(
+        makeBtn("Lançar", "btn-success", () => launchTargets([product]))
+      );
+      actions.appendChild(
+        makeBtn("Vendido", "btn-success", () => markSoldTargets([product]))
+      );
+      actions.appendChild(
+        makeBtn("Retirado", "btn-secondary", () => markRemovedTargets([product]))
+      );
+      actions.appendChild(
+        makeBtn("Eliminar", "btn-error", () => deleteTargets([product]))
+      );
+      card.appendChild(actions);
+    }
 
     detailList.appendChild(card);
   });
@@ -1380,11 +2101,11 @@ function getProductsFromSheet() {
 }
 
 function isProductSold(product) {
-  return toBoolean(product?.vendido, false);
+  return isFlagTrue(product?.vendido, ["vend"]);
 }
 
 function isProductRemoved(product) {
-  return toBoolean(product?.retirado, false);
+  return isFlagTrue(product?.retirado, ["retir"]);
 }
 
 function getProductDays(product) {
@@ -1397,32 +2118,64 @@ function filterProductsByKey(products, key) {
     case "expired":
       return products.filter((p) => {
         const days = getProductDays(p);
+        return days !== null && days < 0;
+      });
+    case "expired-risk":
+      return products.filter((p) => {
+        const days = getProductDays(p);
         return (
           days !== null &&
           days < 0 &&
-          !isProductRemoved(p) &&
-          !isProductSold(p)
+          !isProductSold(p) &&
+          !isProductRemoved(p)
         );
+      });
+    case "expired-sold":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return days !== null && days < 0 && isProductSold(p);
+      });
+    case "expired-removed":
+      return products.filter((p) => {
+        const days = getProductDays(p);
+        return days !== null && days < 0 && isProductRemoved(p);
       });
     case "due7":
       return products.filter((p) => {
         const days = getProductDays(p);
-        return days !== null && days >= 0 && days <= 7 && !isProductSold(p);
+        return (
+          days !== null &&
+          days >= 0 &&
+          days <= 7 &&
+          !isProductSold(p) &&
+          !isProductRemoved(p)
+        );
       });
     case "due30":
       return products.filter((p) => {
         const days = getProductDays(p);
-        return days !== null && days >= 8 && days <= 30 && !isProductSold(p);
+        return (
+          days !== null &&
+          days >= 8 &&
+          days <= 30 &&
+          !isProductSold(p) &&
+          !isProductRemoved(p)
+        );
       });
     case "ok30":
       return products.filter((p) => {
         const days = getProductDays(p);
-        return days !== null && days > 30 && !isProductSold(p);
+        return (
+          days !== null &&
+          days > 30 &&
+          !isProductSold(p) &&
+          !isProductRemoved(p)
+        );
       });
     case "up-to-date":
       return products.filter((p) => {
         const days = getProductDays(p);
-        return days !== null && days >= 0 && !isProductSold(p);
+        return days !== null && days >= 0 && !isProductSold(p) && !isProductRemoved(p);
       });
     case "launched":
       return products.filter((p) => toBoolean(p.lancado, false));
@@ -1432,6 +2185,7 @@ function filterProductsByKey(products, key) {
         return (
           !toBoolean(p.lancado, false) &&
           !isProductSold(p) &&
+          !isProductRemoved(p) &&
           (days === null || days >= 0)
         );
       });
@@ -1482,12 +2236,15 @@ function updateDashboardFromSheet() {
 
   let total = 0;
   let expired = 0;
+  let expiredSold = 0;
+  let expiredRemoved = 0;
   let due7 = 0;
   let due30 = 0;
   let ok30 = 0;
   let launched = 0;
   let notLaunched = 0;
   const expiryItems = [];
+  const historyItems = [];
 
   dataRows.forEach((row) => {
     if (isRowEmpty(row)) return;
@@ -1499,28 +2256,50 @@ function updateDashboardFromSheet() {
       return;
     }
     total += 1;
-    const vendido = vendidoIdx !== -1 && toBoolean(row[vendidoIdx], false);
-    const retirado = retiradoIdx !== -1 && toBoolean(row[retiradoIdx], false);
+    const vendido =
+      vendidoIdx !== -1 && isFlagTrue(row[vendidoIdx], ["vend"]);
+    const retirado =
+      retiradoIdx !== -1 && isFlagTrue(row[retiradoIdx], ["retir"]);
     const lancado = lancadoIdx !== -1 && toBoolean(row[lancadoIdx], false);
 
     let days = null;
     if (validadeIdx !== -1) {
       days = getExpiryDays(row[validadeIdx]);
-      if (days !== null) {
-        if (days < 0) {
-          if (!retirado && !vendido) {
-            expired += 1;
-          }
-        } else if (!vendido) {
-          if (days <= 7) {
-            due7 += 1;
-          } else if (days <= 30) {
-            due30 += 1;
-          } else {
-            ok30 += 1;
-          }
-        }
+    }
+    if (retirado) {
+      expiredRemoved += 1;
+    } else if (vendido) {
+      expiredSold += 1;
+    }
+    if (days !== null && !vendido && !retirado) {
+      if (days < 0) {
+        expired += 1;
+      } else if (days <= 7) {
+        due7 += 1;
+      } else if (days <= 30) {
+        due30 += 1;
+      } else {
+        ok30 += 1;
       }
+    }
+
+    if (vendido || retirado) {
+      const nome = nomeIdx !== -1 ? String(row[nomeIdx] || "").trim() : "";
+      const categoria =
+        categoriaIdx !== -1 ? String(row[categoriaIdx] || "").trim() : "";
+      const quantidade = quantidadeIdx !== -1 ? row[quantidadeIdx] : "";
+      const ean = eanIdx !== -1 ? String(row[eanIdx] || "").trim() : "";
+      const payload = buildPayloadFromRow(headerRow, row);
+      const statusLabel = retirado ? "Retirado" : "Vendido";
+      historyItems.push({
+        nome: nome || (ean ? `EAN ${ean}` : "Produto sem nome"),
+        categoria,
+        quantidade,
+        validade: validadeIdx !== -1 ? formatCellValue(row[validadeIdx]) : "",
+        statusLabel,
+        ean,
+        payload: payload || null,
+      });
     }
 
     if (days !== null) {
@@ -1528,7 +2307,7 @@ function updateDashboardFromSheet() {
         days <= EXPIRY_WINDOW_DAYS &&
         days >= -EXPIRY_PAST_DAYS &&
         !vendido &&
-        !(retirado && days < 0);
+        !retirado;
       if (includeExpiry) {
         const meta = getExpiryMeta(row[validadeIdx]);
         if (meta) {
@@ -1556,7 +2335,7 @@ function updateDashboardFromSheet() {
 
     if (lancado) {
       launched += 1;
-    } else if (!vendido && (days === null || days >= 0)) {
+    } else if (!vendido && !retirado && (days === null || days >= 0)) {
       notLaunched += 1;
     }
   });
@@ -1566,8 +2345,10 @@ function updateDashboardFromSheet() {
   if (metricDue7) metricDue7.textContent = String(due7);
   if (metricLaunched) metricLaunched.textContent = String(launched);
   if (metricNotLaunched) metricNotLaunched.textContent = String(notLaunched);
+  updatePlanLimitBanner(total);
 
-  const expiredRate = total ? Math.round((expired / total) * 100) : 0;
+  const expiredTotal = expired + expiredSold + expiredRemoved;
+  const expiredRate = total ? Math.round((expiredTotal / total) * 100) : 0;
   if (metricExpiredRate) metricExpiredRate.textContent = `${expiredRate}%`;
 
   const sortedExpiry = expiryItems
@@ -1581,17 +2362,10 @@ function updateDashboardFromSheet() {
       if (a.days !== b.days) return a.days - b.days;
       return String(a.nome || "").localeCompare(String(b.nome || ""));
     });
-  const visibleExpiry = sortedExpiry.slice(0, MAX_EXPIRY_ITEMS);
-  renderExpiryList(visibleExpiry);
-  if (expiryCount) {
-    if (!expiryItems.length) {
-      expiryCount.textContent = "Nenhum item crítico";
-    } else if (expiryItems.length > visibleExpiry.length) {
-      expiryCount.textContent = `Mostrando ${visibleExpiry.length} de ${expiryItems.length} itens`;
-    } else {
-      expiryCount.textContent = `${expiryItems.length} item(s) críticos`;
-    }
-  }
+  updateExpiryView(sortedExpiry);
+  renderHistoryList(historyItems);
+  lastHistoryCount = historyItems.length;
+  updateHistoryToggle(lastHistoryCount);
   if (expiryUpdated) {
     expiryUpdated.textContent = `Atualizado às ${brDateTimeFormatter.format(new Date())}`;
   }
@@ -1600,6 +2374,14 @@ function updateDashboardFromSheet() {
   if (expiryChart) {
     expiryChart.data.datasets[0].data = [expired, Math.max(total - expired, 0)];
     expiryChart.update();
+  }
+  if (expiredStatusChart) {
+    expiredStatusChart.data.datasets[0].data = [
+      expired,
+      expiredSold,
+      expiredRemoved,
+    ];
+    expiredStatusChart.update();
   }
   if (launchChart) {
     launchChart.data.datasets[0].data = [launched, notLaunched];
@@ -1612,9 +2394,14 @@ function updateDashboardFromSheet() {
 }
 
 function setRealtimeStatus(connected, message) {
+  realtimeConnected = connected;
   if (!realtimeStatus) return;
   realtimeStatus.textContent = message;
   realtimeStatus.classList.toggle("offline", !connected);
+}
+
+function touchDataUpdate() {
+  lastDataUpdateAt = Date.now();
 }
 
 function scheduleRealtimeRefresh() {
@@ -1623,6 +2410,27 @@ function scheduleRealtimeRefresh() {
     realtimeRefreshTimer = null;
     loadPlanilhaFromServer({ silent: true, reason: "realtime" });
   }, 250);
+}
+
+function scheduleRealtimeFallback(snapshotAt) {
+  if (realtimeFallbackTimer) {
+    clearTimeout(realtimeFallbackTimer);
+  }
+  realtimeFallbackTimer = window.setTimeout(() => {
+    realtimeFallbackTimer = null;
+    if (lastDataUpdateAt > snapshotAt) return;
+    loadPlanilhaFromServer({ silent: true, reason: "realtime" });
+  }, REALTIME_FALLBACK_MS);
+}
+
+function refreshAfterAction(message = "") {
+  const snapshotAt = lastDataUpdateAt;
+  if (message && statusEl) statusEl.textContent = message;
+  if (realtimeConnected) {
+    scheduleRealtimeFallback(snapshotAt);
+    return;
+  }
+  loadPlanilhaFromServer({ silent: true, reason: "realtime" });
 }
 
 function applyRealtimePayload(payload) {
@@ -1656,33 +2464,54 @@ function connectRealtime() {
     setRealtimeStatus(false, "Tempo real: indisponível");
     return;
   }
-  try {
-    const source = new EventSource("/events");
-    source.addEventListener("open", () => {
-      setRealtimeStatus(true, "Tempo real: conectado");
-    });
-    source.addEventListener("error", () => {
-      setRealtimeStatus(false, "Tempo real: reconectando...");
-    });
-    source.addEventListener("message", (event) => {
-      if (!event?.data) return;
-      let message = null;
-      try {
-        message = JSON.parse(event.data);
-      } catch {
-        scheduleRealtimeRefresh();
-        return;
-      }
-      const payload = message?.payload ?? null;
-      if (payload && applyRealtimePayload(payload)) {
-        setRealtimeStatus(true, "Tempo real: conectado");
-        return;
-      }
-      scheduleRealtimeRefresh();
-    });
-  } catch (err) {
-    setRealtimeStatus(false, "Tempo real: erro ao conectar");
+  const endpoints = getRealtimeEndpoints();
+  if (!endpoints.length) {
+    setRealtimeStatus(false, "Tempo real: indisponível");
+    return;
   }
+  let endpointIndex = 0;
+
+  const connectTo = (url) => {
+    if (realtimeSource) {
+      realtimeSource.close();
+    }
+    let opened = false;
+    try {
+      const source = new EventSource(url);
+      realtimeSource = source;
+      source.addEventListener("open", () => {
+        opened = true;
+        setRealtimeStatus(true, "Tempo real: conectado");
+      });
+      source.addEventListener("error", () => {
+        setRealtimeStatus(false, "Tempo real: reconectando...");
+        if (!opened && endpointIndex < endpoints.length - 1) {
+          endpointIndex += 1;
+          connectTo(endpoints[endpointIndex]);
+        }
+      });
+      source.addEventListener("message", (event) => {
+        if (!event?.data) return;
+        let message = null;
+        try {
+          message = JSON.parse(event.data);
+        } catch {
+          scheduleRealtimeRefresh();
+          return;
+        }
+        const payload = message?.payload ?? null;
+        if (payload && applyRealtimePayload(payload)) {
+          setRealtimeStatus(true, "Tempo real: conectado");
+          return;
+        }
+        scheduleRealtimeRefresh();
+      });
+    } catch (err) {
+      setRealtimeStatus(false, "Tempo real: erro ao conectar");
+    }
+  };
+
+  connectTo(endpoints[endpointIndex]);
 }
 
 function columnLetter(index) {
@@ -1866,6 +2695,10 @@ function exportCurrentSheetToPdf() {
 }
 
 exportXlsxBtn.addEventListener("click", () => {
+  if (!isBusinessPlan()) {
+    showPlanCta("Exportacao disponivel no plano Business.");
+    return;
+  }
   const current = getCurrentSheet();
   if (!current) {
     statusEl.textContent = "Nenhuma planilha para exportar.";
@@ -1877,6 +2710,10 @@ exportXlsxBtn.addEventListener("click", () => {
 });
 
 exportCsvBtn.addEventListener("click", () => {
+  if (!isBusinessPlan()) {
+    showPlanCta("Exportacao disponivel no plano Business.");
+    return;
+  }
   const current = getCurrentSheet();
   if (!current) {
     statusEl.textContent = "Nenhuma planilha para exportar.";
@@ -1891,6 +2728,10 @@ exportCsvBtn.addEventListener("click", () => {
 });
 
 exportJsonBtn.addEventListener("click", () => {
+  if (!isBusinessPlan()) {
+    showPlanCta("Exportacao disponivel no plano Business.");
+    return;
+  }
   const current = getCurrentSheet();
   if (!current) {
     statusEl.textContent = "Nenhuma planilha para exportar.";
@@ -1906,7 +2747,13 @@ exportJsonBtn.addEventListener("click", () => {
 });
 
 if (exportPdfBtn) {
-  exportPdfBtn.addEventListener("click", exportCurrentSheetToPdf);
+  exportPdfBtn.addEventListener("click", () => {
+    if (!isBusinessPlan()) {
+      showPlanCta("Exportacao disponivel no plano Business.");
+      return;
+    }
+    exportCurrentSheetToPdf();
+  });
 }
 
 function requestDeletePassword() {
@@ -2029,22 +2876,38 @@ async function launchTargets(targets) {
   statusEl.textContent = `Lançando ${list.length} produto(s)...`;
   try {
     let sent = 0;
+    let failed = 0;
+    let processed = 0;
+    let lastError = "";
     for (const payload of list) {
       const idVal = payload?.id || payload?.ean || "";
       if (!idVal) continue;
-      await postJsonWithFallback(getEndpoints("actions"), {
+      processed += 1;
+      const res = await postJsonWithFallback(getEndpoints("actions"), {
         action: "lancar",
         id: idVal,
         lancado: true,
         ...getUserPayload(),
       });
-      sent += 1;
+      const result = await parseActionResponse(res);
+      if (result.ok) {
+        sent += 1;
+      } else {
+        failed += 1;
+        if (result.message) lastError = result.message;
+      }
     }
-    statusEl.textContent = sent
-      ? "Produtos marcados como lançados."
-      : "Nenhum produto válido para lançar.";
+    if (!processed) {
+      statusEl.textContent = "Nenhum produto válido para lançar.";
+    } else if (failed && sent) {
+      statusEl.textContent = `Lançados ${sent} de ${processed} produto(s).`;
+    } else if (failed) {
+      statusEl.textContent = `Erro ao lançar produtos: ${lastError || "Resposta inválida."}`;
+    } else {
+      statusEl.textContent = "Produtos marcados como lançados.";
+    }
     clearSelections();
-    if (fetchBtn) fetchBtn.click();
+    if (sent) refreshAfterAction();
   } catch (err) {
     statusEl.textContent = `Erro ao lançar produtos: ${err.message || err}`;
   } finally {
@@ -2062,26 +2925,44 @@ async function markSoldTargets(targets) {
   statusEl.textContent = `Marcando ${list.length} produto(s) como vendido...`;
   try {
     let sent = 0;
+    let failed = 0;
+    let processed = 0;
+    let lastError = "";
     for (const payload of list) {
       const idVal = payload?.id || payload?.ean || "";
       if (!idVal) continue;
-      await postJsonWithFallback(getEndpoints("actions"), {
+      processed += 1;
+      const categoriaValue = String(
+        payload?.categoria || payload?.category || payload?.categoria_produto || ""
+      ).trim();
+      const res = await postJsonWithFallback(getEndpoints("actions"), {
         action: "vendido",
-        vendido: true,
+        ...payload,
         id: idVal,
-        ean: payload?.ean || "",
-        nome: payload?.nome || "",
-        quantidade: payload?.quantidade ?? payload?.quantidade_text ?? "",
-        categoria: payload?.categoria ?? "",
+        categoria: categoriaValue,
+        vendido: true,
+        retirado: false,
         ...getUserPayload(),
       });
-      sent += 1;
+      const result = await parseActionResponse(res);
+      if (result.ok) {
+        sent += 1;
+      } else {
+        failed += 1;
+        if (result.message) lastError = result.message;
+      }
     }
-    statusEl.textContent = sent
-      ? "Produtos marcados como vendidos."
-      : "Nenhum produto válido para marcar como vendido.";
+    if (!processed) {
+      statusEl.textContent = "Nenhum produto válido para marcar como vendido.";
+    } else if (failed && sent) {
+      statusEl.textContent = `Marcados ${sent} de ${processed} produto(s) como vendidos.`;
+    } else if (failed) {
+      statusEl.textContent = `Erro ao marcar como vendido: ${lastError || "Resposta inválida."}`;
+    } else {
+      statusEl.textContent = "Produtos marcados como vendidos.";
+    }
     clearSelections();
-    if (fetchBtn) fetchBtn.click();
+    if (sent) refreshAfterAction();
   } catch (err) {
     statusEl.textContent = `Erro ao marcar como vendido: ${err.message || err}`;
   } finally {
@@ -2099,26 +2980,44 @@ async function markRemovedTargets(targets) {
   statusEl.textContent = `Marcando ${list.length} produto(s) como retirado...`;
   try {
     let sent = 0;
+    let failed = 0;
+    let processed = 0;
+    let lastError = "";
     for (const payload of list) {
       const idVal = payload?.id || payload?.ean || "";
       if (!idVal) continue;
-      await postJsonWithFallback(getEndpoints("actions"), {
+      processed += 1;
+      const categoriaValue = String(
+        payload?.categoria || payload?.category || payload?.categoria_produto || ""
+      ).trim();
+      const res = await postJsonWithFallback(getEndpoints("actions"), {
         action: "retirado",
-        retirado: true,
+        ...payload,
         id: idVal,
-        ean: payload?.ean || "",
-        nome: payload?.nome || "",
-        quantidade: payload?.quantidade ?? payload?.quantidade_text ?? "",
-        categoria: payload?.categoria ?? "",
+        categoria: categoriaValue,
+        vendido: false,
+        retirado: true,
         ...getUserPayload(),
       });
-      sent += 1;
+      const result = await parseActionResponse(res);
+      if (result.ok) {
+        sent += 1;
+      } else {
+        failed += 1;
+        if (result.message) lastError = result.message;
+      }
     }
-    statusEl.textContent = sent
-      ? "Produtos marcados como retirados."
-      : "Nenhum produto válido para marcar como retirado.";
+    if (!processed) {
+      statusEl.textContent = "Nenhum produto válido para marcar como retirado.";
+    } else if (failed && sent) {
+      statusEl.textContent = `Marcados ${sent} de ${processed} produto(s) como retirados.`;
+    } else if (failed) {
+      statusEl.textContent = `Erro ao marcar como retirado: ${lastError || "Resposta inválida."}`;
+    } else {
+      statusEl.textContent = "Produtos marcados como retirados.";
+    }
     clearSelections();
-    if (fetchBtn) fetchBtn.click();
+    if (sent) refreshAfterAction();
   } catch (err) {
     statusEl.textContent = `Erro ao marcar como retirado: ${err.message || err}`;
   } finally {
@@ -2141,22 +3040,38 @@ async function deleteTargets(targets) {
   statusEl.textContent = `Eliminando ${list.length} produto(s)...`;
   try {
     let sent = 0;
+    let failed = 0;
+    let processed = 0;
+    let lastError = "";
     for (const payload of list) {
       const idVal = payload?.id || payload?.ean || "";
       if (!idVal) continue;
-      await postJsonWithFallback(getEndpoints("actions"), {
+      processed += 1;
+      const res = await postJsonWithFallback(getEndpoints("actions"), {
         action: "apagar",
         id: idVal,
         password,
         ...getUserPayload(),
       });
-      sent += 1;
+      const result = await parseActionResponse(res);
+      if (result.ok) {
+        sent += 1;
+      } else {
+        failed += 1;
+        if (result.message) lastError = result.message;
+      }
     }
-    statusEl.textContent = sent
-      ? `Solicitação de eliminação enviada para ${sent} produto(s).`
-      : "Nenhum produto válido para eliminar.";
+    if (!processed) {
+      statusEl.textContent = "Nenhum produto válido para eliminar.";
+    } else if (failed && sent) {
+      statusEl.textContent = `Solicitação enviada para ${sent} de ${processed} produto(s).`;
+    } else if (failed) {
+      statusEl.textContent = `Erro ao eliminar: ${lastError || "Resposta inválida."}`;
+    } else {
+      statusEl.textContent = `Solicitação de eliminação enviada para ${sent} produto(s).`;
+    }
     clearSelections();
-    if (fetchBtn) fetchBtn.click();
+    if (sent) refreshAfterAction();
   } catch (err) {
     statusEl.textContent = `Erro ao eliminar: ${err.message || err}`;
   } finally {
@@ -2199,6 +3114,17 @@ function normalizeHeaderLabel(label, fallback) {
   };
   if (map[normalized]) return map[normalized];
   return raw.toUpperCase();
+}
+
+function toColumnKey(label, fallback = "") {
+  const raw = (label ?? fallback ?? "").toString().trim();
+  if (!raw) return "";
+  return raw
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 function normalizeCategory(value) {
@@ -2285,6 +3211,7 @@ function renderSheet(name, { reuseTable = false } = {}) {
     clearSelections();
     renderedRowMap = new Map();
     updateBulkActionsUI();
+    updateTableControls(0, 0);
     return;
   }
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
@@ -2293,6 +3220,7 @@ function renderSheet(name, { reuseTable = false } = {}) {
     clearSelections();
     renderedRowMap = new Map();
     updateBulkActionsUI();
+    updateTableControls(0, 0);
     return;
   }
 
@@ -2317,8 +3245,15 @@ function renderSheet(name, { reuseTable = false } = {}) {
   const headerLower = headerRowValues.map((cell) =>
     String(cell || "").trim().toLowerCase()
   );
+  const columnKeys = [];
+  for (let c = 0; c < maxCols; c++) {
+    columnKeys.push(toColumnKey(headerRowValues[c], columnLetter(c)));
+  }
   const categoriaColumnIndex = headerLower.findIndex(
     (h) => h === "categoria" || h === "categoria_produto" || h === "categoria produto"
+  );
+  const quantidadeColumnIndex = headerLower.findIndex(
+    (h) => h === "quantidade" || h === "qtd"
   );
   if (selectedCategory !== CATEGORY_ALL_VALUE && categoriaColumnIndex !== -1) {
     dataRows = dataRows.filter((row) => categoryMatches(row[categoriaColumnIndex]));
@@ -2328,14 +3263,37 @@ function renderSheet(name, { reuseTable = false } = {}) {
   );
   const vendidoColumnIndex = headerLower.findIndex((h) => h === "vendido");
   const retiradoColumnIndex = headerLower.findIndex((h) => h === "retirado");
+  const lancadoColumnIndex = headerLower.findIndex(
+    (h) => h === "lançado" || h === "lancado"
+  );
+  const trocaColumnIndex = headerLower.findIndex((h) => h === "troca");
+  const rotatividadeColumnIndex = headerLower.findIndex(
+    (h) =>
+      h === "rotatividade_alta" ||
+      h === "rotatividade alta" ||
+      h === "rotatividade"
+  );
+  const dataLancadoColumnIndex = headerLower.findIndex(
+    (h) =>
+      h === "data_lançado" ||
+      h === "data_lancado" ||
+      h === "data_lancamento" ||
+      h === "datalancado"
+  );
+  const skuColumnIndex = headerLower.findIndex((h) => h === "sku");
+  const eanColumnIndex = headerLower.findIndex((h) => h === "ean");
   if (validadeColumnIndex !== -1 || vendidoColumnIndex !== -1 || retiradoColumnIndex !== -1) {
     dataRows = dataRows
       .map((row, index) => ({ row, index }))
       .sort((a, b) => {
-        const aVend = vendidoColumnIndex !== -1 && toBoolean(a.row[vendidoColumnIndex], false);
-        const bVend = vendidoColumnIndex !== -1 && toBoolean(b.row[vendidoColumnIndex], false);
-        const aRet = retiradoColumnIndex !== -1 && toBoolean(a.row[retiradoColumnIndex], false);
-        const bRet = retiradoColumnIndex !== -1 && toBoolean(b.row[retiradoColumnIndex], false);
+        const aVend =
+          vendidoColumnIndex !== -1 && isFlagTrue(a.row[vendidoColumnIndex], ["vend"]);
+        const bVend =
+          vendidoColumnIndex !== -1 && isFlagTrue(b.row[vendidoColumnIndex], ["vend"]);
+        const aRet =
+          retiradoColumnIndex !== -1 && isFlagTrue(a.row[retiradoColumnIndex], ["retir"]);
+        const bRet =
+          retiradoColumnIndex !== -1 && isFlagTrue(b.row[retiradoColumnIndex], ["retir"]);
         const aGroup = aRet ? 2 : aVend ? 1 : 0;
         const bGroup = bRet ? 2 : bVend ? 1 : 0;
         if (aGroup !== bGroup) return aGroup - bGroup;
@@ -2349,20 +3307,138 @@ function renderSheet(name, { reuseTable = false } = {}) {
       })
       .map((item) => item.row);
   }
-  const skuColumnIndex = headerRowValues.findIndex((cell) => {
-    if (cell === null || cell === undefined) return false;
-    return String(cell).trim().toLowerCase() === "sku";
-  });
-  const eanColumnIndex = headerRowValues.findIndex((cell) => {
-    if (cell === null || cell === undefined) return false;
-    return String(cell).trim().toLowerCase() === "ean";
-  });
-  const lancadoColumnIndex = headerLower.findIndex(
-    (h) => h === "lançado" || h === "lancado"
-  );
+
+  const totalRows = dataRows.length;
+  const visibleRows =
+    !tableExpanded && totalRows > TABLE_DEFAULT_LIMIT
+      ? dataRows.slice(0, TABLE_DEFAULT_LIMIT)
+      : dataRows;
+  updateTableControls(totalRows, visibleRows.length);
+  dataRows = visibleRows;
+
+  const isNameColumn = (key) =>
+    key === "nome" || key === "produto" || key === "descricao";
+  const hasNameColumn = columnKeys.some(isNameColumn);
+
+  const appendSummaryItem = (container, label, value) => {
+    if (value === undefined || value === null) return;
+    const isNode = value instanceof Node;
+    const text = isNode ? "" : String(value).trim();
+    if (!isNode && !text) return;
+    const item = document.createElement("span");
+    item.className = "sheet-summary-item";
+    const labelEl = document.createElement("span");
+    labelEl.className = "sheet-summary-label";
+    labelEl.textContent = label;
+    const valueEl = document.createElement("span");
+    valueEl.className = "sheet-summary-value";
+    if (isNode) {
+      valueEl.appendChild(value);
+    } else {
+      valueEl.textContent = text;
+    }
+    item.appendChild(labelEl);
+    item.appendChild(valueEl);
+    container.appendChild(item);
+  };
+
+  const buildSummaryCell = (payload, row) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "sheet-summary";
+
+    const header = document.createElement("div");
+    header.className = "sheet-summary-header";
+
+    const title = document.createElement("div");
+    title.className = "sheet-summary-title";
+    title.textContent =
+      payload.nome || payload.ean || payload.id || "Produto sem nome";
+    header.appendChild(title);
+
+    const tags = document.createElement("div");
+    tags.className = "sheet-summary-tags";
+    const addTag = (label, className) => {
+      if (!label) return;
+      const tag = document.createElement("span");
+      tag.className = `sheet-tag ${className || ""}`.trim();
+      tag.textContent = label;
+      tags.appendChild(tag);
+    };
+
+    const validadeSource =
+      validadeColumnIndex !== -1 ? row[validadeColumnIndex] : payload.validade;
+    const days = getExpiryDays(validadeSource);
+    const isArchived = isProductSold(payload) || isProductRemoved(payload);
+    const statusTag = isArchived ? null : getExpiryStatusTag(days);
+    if (statusTag) addTag(statusTag.label, statusTag.className);
+    if (isProductSold(payload)) addTag("Vendido", "tag-history");
+    if (isProductRemoved(payload)) addTag("Retirado", "tag-history");
+    if (payload.lancado) addTag("Lançado p/ rebaixa", "tag-info");
+
+    if (tags.childElementCount) {
+      header.appendChild(tags);
+    }
+    wrapper.appendChild(header);
+
+    const primary = document.createElement("div");
+    primary.className = "sheet-summary-primary";
+    const dateLabel = formatDateOnly(validadeSource);
+    const daysLabel = formatExpiryDays(days);
+    let expiryValueEl = null;
+    if (daysLabel) {
+      expiryValueEl = document.createElement("span");
+      expiryValueEl.className = "sheet-expiry-value";
+      expiryValueEl.textContent = daysLabel;
+      if (dateLabel) {
+        expiryValueEl.dataset.fullDate = dateLabel;
+        expiryValueEl.title = dateLabel;
+        expiryValueEl.tabIndex = 0;
+      }
+    }
+    appendSummaryItem(primary, "Validade", expiryValueEl || dateLabel);
+    appendSummaryItem(primary, "Categoria", payload.categoria);
+    const quantidadeValue =
+      quantidadeColumnIndex !== -1 ? row[quantidadeColumnIndex] : payload.quantidade_text;
+    appendSummaryItem(primary, "Qtd", quantidadeValue);
+    if (primary.childElementCount) {
+      wrapper.appendChild(primary);
+    }
+
+    const secondary = document.createElement("div");
+    secondary.className = "sheet-summary-secondary";
+    appendSummaryItem(secondary, "EAN", payload.ean);
+    if (skuColumnIndex !== -1) {
+      appendSummaryItem(secondary, "SKU", row[skuColumnIndex]);
+    }
+    appendSummaryItem(secondary, "ID", payload.id);
+    if (trocaColumnIndex !== -1) {
+      appendSummaryItem(secondary, "Troca", booleanLabel(payload.troca, false));
+    }
+    if (rotatividadeColumnIndex !== -1) {
+      appendSummaryItem(
+        secondary,
+        "Rotatividade",
+        booleanLabel(payload.rotatividade_alta, false)
+      );
+    }
+    if (dataLancadoColumnIndex !== -1) {
+      appendSummaryItem(
+        secondary,
+        "Data lançamento",
+        formatDateOnly(row[dataLancadoColumnIndex])
+      );
+    }
+    if (secondary.childElementCount) {
+      wrapper.appendChild(secondary);
+    }
+
+    return wrapper;
+  };
 
   const table = document.createElement("table");
-  table.className = "sheet-table";
+  table.className = hasNameColumn
+    ? "sheet-table sheet-table-compact"
+    : "sheet-table";
   const headerSignature = getHeaderSignature(headerRowValues, maxCols);
   table.dataset.headerSignature = headerSignature;
 
@@ -2391,6 +3467,9 @@ function renderSheet(name, { reuseTable = false } = {}) {
       headerRowValues[c],
       columnLetter(c)
     );
+    const colKey = columnKeys[c] || `col-${c}`;
+    th.dataset.colKey = colKey;
+    th.classList.add(`col-${colKey}`);
     th.textContent = headerLabel;
     headerRow.appendChild(th);
   }
@@ -2428,13 +3507,16 @@ function renderSheet(name, { reuseTable = false } = {}) {
     tr.appendChild(selectTd);
 
     let metaForRow = null;
-    const isSoldRow = toBoolean(payload?.vendido, false);
-    const isRemovedRow = toBoolean(payload?.retirado, false);
+    const isSoldRow = isProductSold(payload);
+    const isRemovedRow = isProductRemoved(payload);
 
     for (let c = 0; c < maxCols; c++) {
       const td = document.createElement("td");
       const value = row[c];
       const headerName = (headerRowValues[c] || "").toString().trim().toLowerCase();
+      const colKey = columnKeys[c] || `col-${c}`;
+      td.dataset.colKey = colKey;
+      td.classList.add(`col-${colKey}`);
       const keepRaw = headerName === "id" || headerName === "quantidade";
       const isBoolField =
         headerName === "troca" ||
@@ -2443,11 +3525,6 @@ function renderSheet(name, { reuseTable = false } = {}) {
         headerName === "rotatividade_alta" ||
         headerName === "rotatividade alta" ||
         headerName === "rotatividade";
-      if (isBoolField) {
-        td.textContent = booleanLabel(value, false);
-      } else {
-        td.textContent = keepRaw ? value ?? "" : formatCellValue(value);
-      }
 
       if (!metaForRow && !isSoldRow && !isRemovedRow) {
         const header = (headerRowValues[c] || "").toString().toLowerCase().trim();
@@ -2456,9 +3533,22 @@ function renderSheet(name, { reuseTable = false } = {}) {
         }
       }
 
+      if (isNameColumn(colKey)) {
+        td.classList.add("summary-cell");
+        td.appendChild(buildSummaryCell(payload, row));
+        tr.appendChild(td);
+        continue;
+      }
+
+      if (isBoolField) {
+        td.textContent = booleanLabel(value, false);
+      } else {
+        td.textContent = keepRaw ? value ?? "" : formatCellValue(value);
+      }
+
       if (lancadoColumnIndex === c) {
         const lancadoMeta = getLancadoMeta(value);
-        td.className = `status-pill ${lancadoMeta.color}`;
+        td.classList.add("status-pill", lancadoMeta.color);
         td.textContent = lancadoMeta.text;
       }
 
@@ -2494,69 +3584,72 @@ function renderSheet(name, { reuseTable = false } = {}) {
     }
 
     const actionsTd = document.createElement("td");
-    actionsTd.style.whiteSpace = "nowrap";
     actionsTd.classList.add("actions-cell");
 
-    const btnEdit = document.createElement("button");
-    btnEdit.type = "button";
-    btnEdit.className = "btn btn-secondary btn-sm";
-    btnEdit.textContent = "Editar";
-    btnEdit.addEventListener("click", () => {
-      if (!payload) return;
-      openEditModal(payload);
+    const actionsInline = document.createElement("div");
+    actionsInline.className = "actions-inline";
+
+    const actionsMenu = document.createElement("div");
+    actionsMenu.className = "actions-menu";
+
+    const makeActionButton = (label, className, handler) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `btn ${className} btn-sm`;
+      btn.textContent = label;
+      btn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        await handler();
+        closeActionMenus();
+      });
+      return btn;
+    };
+
+    const addAction = (label, className, handler, { mobile = true } = {}) => {
+      actionsInline.appendChild(makeActionButton(label, className, handler));
+      if (mobile) {
+        actionsMenu.appendChild(makeActionButton(label, className, handler));
+      }
+    };
+
+    addAction("Editar", "btn-secondary", () => openEditModal(payload), {
+      mobile: false,
+    });
+    addAction("Lançar", "btn-success", () => launchTargets([payload]));
+    addAction("Vendido", "btn-success", () => markSoldTargets([payload]));
+    addAction("Retirado", "btn-secondary", () => markRemovedTargets([payload]));
+    addAction("Eliminar", "btn-error", () => deleteTargets([payload]));
+
+    const actionsToggle = document.createElement("button");
+    actionsToggle.type = "button";
+    actionsToggle.className = "btn btn-secondary btn-sm actions-toggle";
+    actionsToggle.textContent = "Ações";
+    actionsToggle.setAttribute("aria-haspopup", "true");
+    actionsToggle.setAttribute("aria-expanded", "false");
+    actionsToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const isOpen = actionsTd.classList.contains("actions-open");
+      closeActionMenus();
+      if (!isOpen) {
+        actionsTd.classList.add("actions-open");
+      }
+      actionsToggle.setAttribute("aria-expanded", String(!isOpen));
     });
 
-    const btnDelete = document.createElement("button");
-    btnDelete.type = "button";
-    btnDelete.className = "btn btn-error btn-sm";
-    btnDelete.style.marginLeft = "6px";
-    btnDelete.textContent = "Eliminar";
-    btnDelete.addEventListener("click", async () => {
-      if (!payload) return;
-      await deleteTargets([payload]);
-    });
-
-    const btnLancado = document.createElement("button");
-    btnLancado.type = "button";
-    btnLancado.className = "btn btn-success btn-sm";
-    btnLancado.style.marginLeft = "6px";
-    btnLancado.textContent = "Lançar";
-    btnLancado.addEventListener("click", async () => {
-      if (!payload) return;
-      await launchTargets([payload]);
-    });
-
-    const btnVendido = document.createElement("button");
-    btnVendido.type = "button";
-    btnVendido.className = "btn btn-success btn-sm";
-    btnVendido.style.marginLeft = "6px";
-    btnVendido.textContent = "Vendido";
-    btnVendido.addEventListener("click", async () => {
-      if (!payload) return;
-      await markSoldTargets([payload]);
-    });
-
-    const btnRetirado = document.createElement("button");
-    btnRetirado.type = "button";
-    btnRetirado.className = "btn btn-secondary btn-sm";
-    btnRetirado.style.marginLeft = "6px";
-    btnRetirado.textContent = "Retirado";
-    btnRetirado.addEventListener("click", async () => {
-      if (!payload) return;
-      await markRemovedTargets([payload]);
-    });
-
-    actionsTd.appendChild(btnEdit);
-    actionsTd.appendChild(btnDelete);
-    actionsTd.appendChild(btnLancado);
-    actionsTd.appendChild(btnVendido);
-    actionsTd.appendChild(btnRetirado);
+    actionsTd.appendChild(actionsInline);
+    actionsTd.appendChild(actionsToggle);
+    actionsTd.appendChild(actionsMenu);
 
     tr.appendChild(actionsTd);
 
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
+
+  if (!actionMenuListenerSet) {
+    document.addEventListener("click", closeActionMenus);
+    actionMenuListenerSet = true;
+  }
 
   const previousScrollTop = output.scrollTop;
   const existingTable = output.querySelector("table.sheet-table");
@@ -2578,6 +3671,7 @@ function renderSheet(name, { reuseTable = false } = {}) {
   output.scrollTop = previousScrollTop;
   updateBulkActionsUI();
   updateDashboardFromSheet();
+  touchDataUpdate();
 }
 
 if (bulkLaunchBtn) {
@@ -2666,8 +3760,8 @@ function buildPayloadFromRow(headers, row) {
       quantidadeRaw !== undefined && quantidadeRaw !== "" ? String(quantidadeRaw) : String(qty),
     validade: validadeRaw !== "" ? validadeRaw : get("validade"),
     troca: toBoolean(get("troca"), false),
-    vendido: toBoolean(vendidoRaw, false),
-    retirado: toBoolean(retiradoRaw, false),
+    vendido: isFlagTrue(vendidoRaw, ["vend"]),
+    retirado: isFlagTrue(retiradoRaw, ["retir"]),
     rotatividade_alta: toBoolean(rotatividadeRaw, false),
     lancado,
     data_lancado: dataLancado,
@@ -3093,12 +4187,14 @@ function validateItem(item) {
 
 async function enviarItem(item, index, statusEl) {
   const qty = Number.isFinite(Number(item.quantidade)) ? Number(item.quantidade) : 0;
+  const categoriaValue = String(item.categoria || "").trim();
   const payload = {
     action: "insert",
     id: item.id || item.codigo || "",
     ean: item.codigo,
     nome: item.nome.trim(),
-    categoria: item.categoria,
+    categoria: categoriaValue,
+    categoria_produto: categoriaValue,
     quantidade: qty,
     quantidade_text: String(qty),
     validade: item.validade,
@@ -3107,7 +4203,12 @@ async function enviarItem(item, index, statusEl) {
     ...getUserPayload(),
   };
 
-  await postJsonWithFallback(getEndpoints("produto"), payload);
+  const res = await postJsonWithFallback(getEndpoints("produto"), payload);
+  const result = await parseActionResponse(res);
+  if (!result.ok) {
+    throw new Error(result.message || "Resposta inválida do servidor.");
+  }
+  return result;
 }
 
 async function enviarTodos() {
@@ -3138,7 +4239,7 @@ async function enviarTodos() {
       console.error("Erro ao enviar produto:", err);
       setStatus(
         statusEl,
-        "Erro ao enviar produto. Tente novamente.",
+        err.message || "Erro ao enviar produto. Tente novamente.",
         "erro"
       );
     }
@@ -3151,7 +4252,7 @@ async function enviarTodos() {
     mensagem.textContent = `${enviados} produto(s) enviado(s).`;
     mensagem.className = "ok";
     setTimeout(() => {
-      fetchBtn.click();
+      refreshAfterAction();
     }, 1000);
   }
 }
@@ -3205,6 +4306,9 @@ const targets = currentEditTargets.length
   editStatus.className = "status";
 
   try {
+    let sent = 0;
+    let failed = 0;
+    let lastError = "";
     for (const target of targets) {
       const trocaParsed =
         editTroca && editTroca.indeterminate
@@ -3239,15 +4343,28 @@ const targets = currentEditTargets.length
         editStatus.className = "status err";
         return;
       }
-      await postJsonWithFallback(getEndpoints("actions"), payload);
+      const res = await postJsonWithFallback(getEndpoints("actions"), payload);
+      const result = await parseActionResponse(res);
+      if (result.ok) {
+        sent += 1;
+      } else {
+        failed += 1;
+        if (result.message) lastError = result.message;
+      }
     }
-    editStatus.textContent = isBulk
-      ? "Registros atualizados."
-      : "Registro enviado.";
+    if (failed) {
+      editStatus.textContent = sent
+        ? `Alguns registros não foram confirmados (${sent}/${targets.length}).`
+        : `Erro ao salvar: ${lastError || "Resposta inválida."}`;
+      editStatus.className = "status err";
+      if (sent) refreshAfterAction();
+      return;
+    }
+    editStatus.textContent = isBulk ? "Registros atualizados." : "Registro enviado.";
     editStatus.className = "status ok";
     clearSelections();
     closeEditModal();
-    fetchBtn.click();
+    refreshAfterAction();
   } catch (err) {
     editStatus.textContent = `Erro ao salvar: ${err.message || err}`;
     editStatus.className = "status err";
@@ -3255,6 +4372,28 @@ const targets = currentEditTargets.length
 });
 
 ensureAtLeastOneItem();
+updatePlanBadge();
+applyPlanLocks();
+
+const upgradeToast = document.getElementById("upgrade-toast");
+const upgradeToastClose = document.getElementById("upgrade-toast-close");
+
+function updateUpgradeToastVisibility() {
+  if (!upgradeToast) return;
+  const planType = localStorage.getItem("plan_type");
+  const dismissed = localStorage.getItem("upgrade_toast_dismissed") === "1";
+  const shouldHide = planType === "business" || dismissed;
+  upgradeToast.classList.toggle("is-hidden", shouldHide);
+}
+
+if (upgradeToastClose) {
+  upgradeToastClose.addEventListener("click", () => {
+    localStorage.setItem("upgrade_toast_dismissed", "1");
+    updateUpgradeToastVisibility();
+  });
+}
+
+updateUpgradeToastVisibility();
 
 if (isAuthenticated && fetchBtn) {
   fetchBtn.click();

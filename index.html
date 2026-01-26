@@ -4,1285 +4,22 @@
     <meta charset="UTF-8" />
     <title>Controle de Validades - Sistema de Cadastro e Controle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2587784478717821"
-      crossorigin="anonymous"
-    ></script>
-    <style id="auth-guard-style">
-      /* Evita flash do index antes da checagem */
-      body { display: none !important; }
-    </style>
-    <script>
-      (function enforceAuthEarly() {
-        const AUTH_KEY = "gp_auth";
-        const USER_KEY = "gp_user";
-        const isAuthenticated = localStorage.getItem(AUTH_KEY) === "1";
-        const hasUser = Boolean(localStorage.getItem(USER_KEY));
-        if (!isAuthenticated || !hasUser) {
-          window.location.replace("sales.html");
-          return;
-        }
-        // Libera renderização do index após validação
-        const guardStyle = document.getElementById("auth-guard-style");
-        if (guardStyle) guardStyle.remove();
-        document.addEventListener("DOMContentLoaded", () => {
-          document.body.style.display = "";
-        });
-      })();
-    </script>
-    
+    <meta name="robots" content="noindex, nofollow" />
     <!-- Fuentes modernas -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    
-    
-    <style>
-      :root {
-        --bg-primary: #f5f7fb;
-        --bg-secondary: #f8fafc;
-        --bg-tertiary: #eef2f7;
-        --bg-card: #ffffff;
-        --glass: rgba(255, 255, 255, 0.92);
-        --text-primary: #0f172a;
-        --text-secondary: #1f2937;
-        --text-muted: #475569;
-        --accent-primary: #2563eb;
-        --accent-secondary: #06b6d4;
-        --accent-success: #22c55e;
-        --accent-warning: #fbbf24;
-        --accent-error: #ef4444;
-        --border-light: rgba(15, 23, 42, 0.08);
-        --border-medium: rgba(15, 23, 42, 0.16);
-        --shadow-sm: 0 8px 20px rgba(15, 23, 42, 0.08);
-        --shadow-md: 0 14px 40px rgba(15, 23, 42, 0.12);
-        --shadow-lg: 0 22px 80px rgba(15, 23, 42, 0.16);
-        --radius-sm: 10px;
-        --radius-md: 14px;
-        --radius-lg: 18px;
-        --radius-xl: 22px;
-        --blur: blur(16px);
-        --gradient: radial-gradient(circle at 18% 18%, rgba(37, 99, 235, 0.12), transparent 36%), radial-gradient(circle at 82% 8%, rgba(6, 182, 212, 0.12), transparent 32%), radial-gradient(circle at 42% 82%, rgba(16, 185, 129, 0.12), transparent 30%);
-      }
-
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.6;
-        color: var(--text-primary);
-        background: var(--bg-primary);
-        min-height: 100vh;
-        padding: 1.25rem 1rem 2.5rem;
-        position: relative;
-        overflow-x: hidden;
-      }
-
-      body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: var(--gradient);
-        z-index: 0;
-        opacity: 0.45;
-        pointer-events: none;
-      }
-
-      a {
-        color: var(--accent-primary);
-      }
-
-      .page {
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        position: relative;
-        z-index: 1;
-      }
-
-      .version-badge {
-        position: fixed;
-        top: 14px;
-        right: 14px;
-        background: #fff;
-        color: var(--text-primary);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 0.5rem 0.9rem;
-        box-shadow: var(--shadow-md);
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        z-index: 999;
-        backdrop-filter: var(--blur);
-      }
-
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.85rem 1.15rem;
-        margin-bottom: 1rem;
-        background: #fff;
-        border: 1px solid var(--border-medium);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        backdrop-filter: var(--blur);
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-      }
-
-      .brand-logo {
-        height: 44px;
-        width: auto;
-        border-radius: 10px;
-      }
-
-      .top-actions {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-
-      h1,
-      h2,
-      h3 {
-        font-weight: 700;
-        line-height: 1.25;
-        color: var(--text-primary);
-      }
-
-      h1 {
-        font-size: 1.9rem;
-        margin-bottom: 0.2rem;
-      }
-
-      h2 {
-        font-size: 1.35rem;
-        margin-bottom: 0.4rem;
-      }
-
-      .panel {
-        background: #fff;
-        backdrop-filter: var(--blur);
-        border-radius: var(--radius-xl);
-        padding: 1.5rem 1.75rem;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--border-medium);
-        position: relative;
-        overflow: hidden;
-      }
-
-      .panel::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        border-radius: var(--radius-xl);
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0));
-      }
-
-      .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .metric-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        padding: 1rem 1.1rem;
-        box-shadow: var(--shadow-sm);
-      }
-
-      .metric-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .metric-value {
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin-top: 0.25rem;
-      }
-
-      .metric-card[data-metric] {
-        cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-      }
-
-      .metric-card[data-metric]:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--border-medium);
-      }
-
-      .charts-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 1rem;
-      }
-
-      .chart-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        padding: 1rem;
-        box-shadow: var(--shadow-sm);
-        min-height: 240px;
-      }
-
-      .expiry-board {
-        margin-top: 1.5rem;
-        background: var(--bg-card);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        padding: 1.2rem 1.3rem;
-        box-shadow: var(--shadow-sm);
-      }
-
-      .expiry-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-bottom: 1rem;
-      }
-
-      .expiry-meta {
-        display: flex;
-        gap: 0.6rem;
-        align-items: center;
-        flex-wrap: wrap;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-      }
-
-      .expiry-count {
-        padding: 0.35rem 0.75rem;
-        border-radius: 999px;
-        border: 1px solid var(--border-light);
-        background: #f8fafc;
-        font-weight: 700;
-        color: var(--text-secondary);
-      }
-
-      .expiry-updated {
-        font-weight: 600;
-      }
-
-      .expiry-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.75rem;
-      }
-
-      .expiry-item {
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 0.9rem 1rem;
-        background: #fff;
-        box-shadow: var(--shadow-sm);
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        color: var(--text-primary);
-      }
-
-      .expiry-item.expiry-red {
-        border-left: 6px solid #ef4444;
-        background: #fff5f5;
-      }
-
-      .expiry-item.expiry-yellow {
-        border-left: 6px solid #f59e0b;
-        background: #fff8e7;
-      }
-
-      .expiry-item.expiry-green {
-        border-left: 6px solid #22c55e;
-        background: #f3fdf5;
-      }
-
-      .expiry-item.is-clickable {
-        cursor: pointer;
-      }
-
-      .expiry-item.is-clickable:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-      }
-
-      .expiry-item-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-      }
-
-      .expiry-name {
-        font-weight: 700;
-        font-size: 1rem;
-      }
-
-      .expiry-tag {
-        font-size: 0.7rem;
-        font-weight: 700;
-        padding: 0.2rem 0.6rem;
-        border-radius: 999px;
-        border: 1px solid transparent;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        white-space: nowrap;
-      }
-
-      .expiry-item.expiry-red .expiry-tag {
-        background: #fee2e2;
-        color: #b91c1c;
-        border-color: #fecdd3;
-      }
-
-      .expiry-item.expiry-yellow .expiry-tag {
-        background: #fef3c7;
-        color: #b45309;
-        border-color: #fde68a;
-      }
-
-      .expiry-item.expiry-green .expiry-tag {
-        background: #dcfce7;
-        color: #15803d;
-        border-color: #bbf7d0;
-      }
-
-      .expiry-date {
-        font-weight: 600;
-        color: var(--text-secondary);
-      }
-
-      .expiry-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        font-size: 0.8rem;
-        color: var(--text-muted);
-      }
-
-      .expiry-chip {
-        padding: 0.2rem 0.5rem;
-        border-radius: 999px;
-        border: 1px solid var(--border-light);
-        background: #f8fafc;
-        font-weight: 600;
-      }
-
-      .expiry-empty {
-        padding: 1rem;
-        border: 1px dashed var(--border-light);
-        border-radius: var(--radius-md);
-        color: var(--text-muted);
-        background: var(--bg-secondary);
-      }
-
-      .live-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.4rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        background: #ecfeff;
-        color: #0e7490;
-        border: 1px solid #a5f3fc;
-      }
-
-      .live-pill.offline {
-        background: #fef2f2;
-        color: #b91c1c;
-        border-color: #fecaca;
-      }
-
-      .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 1.5rem;
-        gap: 1rem;
-      }
-
-      .panel-subtitle {
-        font-size: 0.95rem;
-        color: var(--text-muted);
-        margin-top: 0.35rem;
-      }
-
-      .header-actions,
-      .barcode-actions {
-        display: flex;
-        gap: 0.6rem;
-        flex-wrap: wrap;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.7rem 1.2rem;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-        border: 1px solid transparent;
-        outline: none;
-        white-space: nowrap;
-        letter-spacing: 0.01em;
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        color: #fff;
-        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
-        border-color: rgba(37, 99, 235, 0.35);
-      }
-
-      .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 14px 36px rgba(37, 99, 235, 0.35);
-      }
-
-      .btn-secondary {
-        background-color: #e2e8f0;
-        color: var(--text-primary);
-        border: 1px solid var(--border-medium);
-      }
-
-      .btn-secondary:hover {
-        border-color: var(--accent-primary);
-        background-color: #dbeafe;
-        color: var(--text-primary);
-      }
-
-      .btn-success {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-        color: #fff;
-        border-color: rgba(34, 197, 94, 0.5);
-      }
-
-      .btn-error {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: #fff;
-        border-color: rgba(239, 68, 68, 0.6);
-      }
-
-      .btn-sm {
-        padding: 0.45rem 0.85rem;
-        font-size: 0.85rem;
-      }
-
-      .btn-xs {
-        padding: 0.35rem 0.7rem;
-        font-size: 0.78rem;
-      }
-
-      .toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        align-items: center;
-        margin-bottom: 1.25rem;
-        padding: 0.9rem 0;
-        border-bottom: 1px solid var(--border-light);
-        border-top: 1px solid var(--border-light);
-      }
-
-      .toolbar-spacer {
-        flex: 1;
-      }
-
-      .env-switch {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .env-switch label {
-        font-weight: 700;
-        color: var(--text-secondary);
-      }
-
-      .bulk-actions {
-        display: none;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-        padding: 0.75rem 0.9rem;
-        border: 1px dashed var(--border-medium);
-        border-radius: var(--radius-md);
-        background: rgba(37, 99, 235, 0.03);
-      }
-
-      .bulk-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-      }
-
-      .bulk-buttons {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-
-      select {
-        padding: 0.6rem 0.9rem;
-        border-radius: 10px;
-        border: 1px solid var(--border-medium);
-        background-color: #fff;
-        font-size: 0.95rem;
-        color: var(--text-primary);
-        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
-      }
-
-      select:focus,
-      input:focus,
-      textarea:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
-      }
-
-      #category-filter {
-        width: 220px;
-        min-width: 180px;
-      }
-
-      #output {
-        overflow: auto;
-        max-height: 70vh;
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--border-light);
-        background: #fff;
-        box-shadow: var(--shadow-sm);
-      }
-
-      table {
-        border-collapse: collapse;
-        width: 100%;
-      }
-
-      table th,
-      table td {
-        border: 1px solid var(--border-light);
-        padding: 0.85rem 1rem;
-        text-align: left;
-      }
-
-      table th {
-        background: #eef2f7;
-        font-weight: 700;
-        color: var(--text-primary);
-      }
-
-      table td {
-        color: var(--text-secondary);
-        background: #fff;
-      }
-
-      th.row-index {
-        background: var(--bg-card);
-        color: var(--text-muted);
-        font-weight: 600;
-      }
-
-      .sheet-table {
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
-      }
-
-      .sheet-table tr:nth-child(even) td {
-        background-color: #f8fafc;
-      }
-
-      .sheet-table tr:hover td {
-        background: rgba(37, 99, 235, 0.1);
-      }
-
-      .sheet-table tr.expiry-red td,
-      .sheet-table tr.expiry-red th.row-index {
-        background: #ffe5e5;
-      }
-
-      .sheet-table tr.expiry-yellow td,
-      .sheet-table tr.expiry-yellow th.row-index {
-        background: #fff6d6;
-      }
-
-      .sheet-table tr.expiry-green td,
-      .sheet-table tr.expiry-green th.row-index {
-        background: #e8f8ec;
-      }
-
-      .sheet-table tr.expiry-red {
-        border-left: 4px solid #ef4444;
-      }
-
-      .sheet-table tr.expiry-yellow {
-        border-left: 4px solid #f59e0b;
-      }
-
-      .sheet-table tr.expiry-green {
-        border-left: 4px solid #22c55e;
-      }
-
-      .sheet-table tr.row-sold td,
-      .sheet-table tr.row-sold th.row-index {
-        background: #e0f2fe;
-      }
-
-      .sheet-table tr.row-removed td,
-      .sheet-table tr.row-removed th.row-index {
-        background: #f1f5f9;
-      }
-
-      .sheet-table tr.row-sold {
-        border-left: 4px solid #0ea5e9;
-      }
-
-      .sheet-table tr.row-removed {
-        border-left: 4px solid #94a3b8;
-      }
-
-      .sheet-table tr.selected-row td,
-      .sheet-table tr.selected-row th.row-index {
-        background: rgba(37, 99, 235, 0.12);
-      }
-
-      .sku-cell {
-        cursor: pointer;
-        color: var(--accent-primary);
-        font-weight: 700;
-      }
-
-      #status {
-        margin-bottom: 1rem;
-        min-height: 20px;
-        font-size: 0.95rem;
-        color: var(--text-muted);
-      }
-
-      form {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      label {
-        font-weight: 700;
-        color: var(--text-primary);
-        display: block;
-        margin-bottom: 0.35rem;
-      }
-
-      input,
-      select,
-      textarea {
-        width: 100%;
-        padding: 0.85rem 1rem;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-medium);
-        background: #fff;
-        color: var(--text-primary);
-        transition: all 0.15s ease;
-        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
-      }
-
-      small {
-        font-size: 0.82rem;
-        color: var(--text-muted);
-      }
-
-      #mensagem,
-      .status {
-        margin-top: 1rem;
-        font-size: 0.9rem;
-      }
-
-      #mensagem.ok,
-      .status.ok {
-        background-color: rgba(34, 197, 94, 0.08);
-        color: var(--accent-success);
-        border: 1px solid rgba(34, 197, 94, 0.25);
-        padding: 0.7rem 0.9rem;
-        border-radius: var(--radius-md);
-      }
-
-      #mensagem.erro,
-      .status.err {
-        background-color: rgba(239, 68, 68, 0.08);
-        color: var(--accent-error);
-        border: 1px solid rgba(239, 68, 68, 0.25);
-        padding: 0.7rem 0.9rem;
-        border-radius: var(--radius-md);
-      }
-
-      .extra-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: center;
-      }
-
-      .extra-controls input[type="text"] {
-        flex: 1;
-        min-width: 140px;
-      }
-
-      .extra-list {
-        margin-top: 0.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 120px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-weight: 700;
-        font-size: 0.85rem;
-        border: 1px solid transparent;
-      }
-
-      .expiry-red { background: #fee2e2; color: #b91c1c; border-color: #fecdd3; }
-      .expiry-yellow { background: #fef3c7; color: #b45309; border-color: #fde68a; }
-      .expiry-green { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-      .lancado-true { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
-      .lancado-false { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
-      tr.expiry-red td { background: #fff7f7; }
-      tr.expiry-yellow td { background: #fffaf0; }
-      tr.expiry-green td { background: #f6fff8; }
-
-      .barcode-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        align-items: start;
-      }
-
-      .camera-box {
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--border-light);
-        background: var(--bg-secondary);
-        min-height: 190px;
-        overflow: hidden;
-        position: relative;
-        box-shadow: var(--shadow-sm);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px;
-      }
-
-      #reader1 {
-        width: 100%;
-        max-width: 100%;
-        height: 170px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        position: relative;
-      }
-
-      #reader1 > div {
-        width: 100% !important;
-        height: 100% !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      #reader1 video,
-      #reader1 canvas {
-        width: 100% !important;
-        height: 100% !important;
-        max-height: none !important;
-        object-fit: cover;
-      }
-
-      /* Indicador de faixa de leitura */
-      #reader1::after {
-        content: "";
-        position: absolute;
-        left: 10%;
-        right: 10%;
-        top: 50%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.9), transparent);
-        box-shadow:
-          0 0 6px rgba(239, 68, 68, 0.5),
-          0 0 12px rgba(239, 68, 68, 0.35);
-        animation: scanline 1.8s infinite;
-        transform: translateY(-50%);
-        pointer-events: none;
-      }
-
-      @keyframes scanline {
-        0% { transform: translateY(-60%); opacity: 0.9; }
-        50% { transform: translateY(60%); opacity: 0.5; }
-        100% { transform: translateY(-60%); opacity: 0.9; }
-      }
-
-      #barcode-result {
-        font-weight: 700;
-        margin-bottom: 0.35rem;
-        color: var(--text-primary);
-      }
-
-      #barcode-status {
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-      }
-
-      #barcode-status.ok {
-        color: var(--accent-success);
-      }
-
-      #barcode-status.erro {
-        color: var(--accent-error);
-      }
-
-      .manual-ean {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-      }
-
-      .manual-ean input {
-        flex: 1;
-      }
-
-      .barcode-hint {
-        color: var(--text-muted);
-        font-size: 0.8rem;
-        display: block;
-        margin-top: 0.25rem;
-      }
-
-      .switch {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        user-select: none;
-      }
-
-      .switch input {
-        display: none;
-      }
-
-      .switch .slider {
-        position: relative;
-        width: 44px;
-        height: 24px;
-        background: #cbd5e1;
-        border-radius: 999px;
-        transition: all 0.2s ease;
-      }
-
-      .switch .slider::after {
-        content: "";
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 18px;
-        height: 18px;
-        background: #fff;
-        border-radius: 50%;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-        transition: all 0.2s ease;
-      }
-
-      .switch input:checked + .slider {
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-      }
-
-      .switch input:checked + .slider::after {
-        transform: translateX(20px);
-      }
-
-      .switch-label {
-        font-weight: 700;
-        color: var(--text-primary);
-      }
-
-      #edit-modal {
-        position: fixed;
-        inset: 0;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.4);
-        z-index: 9999;
-        padding: 1rem;
-      }
-
-      #edit-modal .modal-card {
-        background: #fff;
-        padding: 1.5rem;
-        border-radius: var(--radius-lg);
-        max-width: 520px;
-        width: 100%;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-medium);
-      }
-
-      #detail-modal {
-        position: fixed;
-        inset: 0;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        background: rgba(15, 23, 42, 0.45);
-        z-index: 9998;
-        padding: 1rem;
-      }
-
-      #detail-modal .modal-card {
-        background: #fff;
-        padding: 1.5rem;
-        border-radius: var(--radius-lg);
-        max-width: 760px;
-        width: 100%;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-medium);
-        max-height: 85vh;
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-      }
-
-      .detail-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-      }
-
-      .detail-meta {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-muted);
-      }
-
-      .detail-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        overflow: auto;
-        padding-right: 0.25rem;
-      }
-
-      .detail-item {
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-md);
-        padding: 0.85rem 1rem;
-        background: #fff;
-        box-shadow: var(--shadow-sm);
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .detail-item.expiry-red {
-        border-left: 6px solid #ef4444;
-        background: #fff5f5;
-      }
-
-      .detail-item.expiry-yellow {
-        border-left: 6px solid #f59e0b;
-        background: #fff8e7;
-      }
-
-      .detail-item.expiry-green {
-        border-left: 6px solid #22c55e;
-        background: #f3fdf5;
-      }
-
-      .detail-item-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-      }
-
-      .detail-item-name {
-        font-weight: 700;
-        font-size: 1rem;
-        color: var(--text-primary);
-      }
-
-      .detail-item-date {
-        font-weight: 600;
-        color: var(--text-secondary);
-      }
-
-      .detail-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.6rem;
-        border-radius: 999px;
-        font-weight: 700;
-        font-size: 0.7rem;
-        border: 1px solid transparent;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        white-space: nowrap;
-      }
-
-      .detail-badge.expiry-red {
-        background: #fee2e2;
-        color: #b91c1c;
-        border-color: #fecdd3;
-      }
-
-      .detail-badge.expiry-yellow {
-        background: #fef3c7;
-        color: #b45309;
-        border-color: #fde68a;
-      }
-
-      .detail-badge.expiry-green {
-        background: #dcfce7;
-        color: #15803d;
-        border-color: #bbf7d0;
-      }
-
-      .detail-badge.lancado-true {
-        background: #e0f2fe;
-        color: #075985;
-        border-color: #bae6fd;
-      }
-
-      .detail-badge.lancado-false {
-        background: #f8fafc;
-        color: #334155;
-        border-color: #e2e8f0;
-      }
-
-      .detail-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        font-size: 0.8rem;
-        color: var(--text-muted);
-      }
-
-      .detail-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        margin-top: 0.2rem;
-      }
-
-      .detail-tag {
-        padding: 0.2rem 0.5rem;
-        border-radius: 999px;
-        border: 1px solid var(--border-light);
-        background: #f8fafc;
-        font-weight: 600;
-      }
-
-      .detail-empty {
-        padding: 1rem;
-        border: 1px dashed var(--border-light);
-        border-radius: var(--radius-md);
-        color: var(--text-muted);
-        background: var(--bg-secondary);
-      }
-
-      .modal-actions {
-        margin-top: 1rem;
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.75rem;
-      }
-
-      .modal-hint {
-        color: var(--text-muted);
-        margin: 0.35rem 0 0.75rem;
-        font-size: 0.95rem;
-      }
-
-      .row-index {
-        width: 44px;
-        text-align: center;
-      }
-
-      .sheet-table thead th:first-child {
-        position: sticky;
-        left: 0;
-        z-index: 2;
-      }
-
-      .sheet-table th.select-col {
-        width: 52px;
-        text-align: center;
-      }
-
-      .sheet-table td.select-cell {
-        text-align: center;
-      }
-
-      .sheet-table tbody th.row-index {
-        position: sticky;
-        left: 0;
-        background: #f8fafc;
-        z-index: 1;
-      }
-
-      .sheet-table td {
-        white-space: nowrap;
-        max-width: 220px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .sheet-table td.actions-cell,
-      .sheet-table td.select-cell {
-        max-width: none;
-        overflow: visible;
-      }
-
-      .sheet-table td.actions-cell {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-      }
-
-      .sheet-table td:hover {
-        white-space: normal;
-      }
-
-      .muted {
-        color: var(--text-muted);
-      }
-
-      .barcode-grid.collapsed {
-        grid-template-columns: 1fr;
-      }
-
-      @media (min-width: 900px) {
-        body {
-          padding: 1.75rem 1.5rem 3rem;
-        }
-
-        .barcode-grid {
-          grid-template-columns: 1.4fr 1fr;
-          gap: 1.25rem;
-        }
-
-      }
-
-      @media (max-width: 900px) {
-        .panel-header {
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .topbar {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .barcode-actions {
-          justify-content: flex-start;
-        }
-      }
-
-      @media (max-width: 640px) {
-        body {
-          padding: 1rem 0.75rem;
-        }
-
-        .page {
-          gap: 1rem;
-        }
-
-        .panel {
-          padding: 1.25rem;
-        }
-
-        .toolbar {
-          padding: 0.75rem 0;
-        }
-
-        table.sheet-table {
-          font-size: 0.8rem;
-        }
-
-        th,
-        td {
-          padding: 0.5rem 0.75rem;
-        }
-
-        #output {
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .camera-box {
-          min-height: 160px;
-        }
-
-        #reader1 {
-          height: 140px;
-        }
-
-        .expiry-list {
-          grid-template-columns: 1fr;
-        }
-
-        #category-filter {
-          width: 100%;
-        }
-      }
-    </style>
-
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div id="version-badge" class="version-badge"></div>
-      <div class="topbar">
+    <div class="topbar">
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
         <div class="brand">
           <img src="logo.png" alt="Controle de Validades" class="brand-logo" />
           <div>
@@ -1292,12 +29,31 @@
         </div>
       <div class="top-actions">
         <span class="status-pill expiry-green">Online</span>
+        <span class="plan-badge plan-free plan-tooltip" id="plan-badge" data-tooltip="Voce esta usando o plano gratuito">
+          Plano Free
+        </span>
         <button id="logout-btn" class="btn btn-error btn-sm" type="button">
           Sair
         </button>
       </div>
     </div>
-    <div class="page">
+    <div class="page-shell">
+      <aside class="side-menu" id="side-menu" aria-hidden="true">
+        <div class="side-menu-title">Ecossistema</div>
+        <nav class="side-menu-links">
+          <a href="sales.html">Inicio</a>
+          <a href="index.html" class="is-active">Painel</a>
+          <a href="sobre.html">Sobre</a>
+          <a href="servicos.html">Servicos</a>
+          <a href="ferramentas.html">Ferramentas</a>
+          <a href="contato.html">Contato</a>
+          <a href="minha-conta.html">Minha conta</a>
+          <a href="login.html">Login</a>
+        </nav>
+      </aside>
+      <div class="side-menu-backdrop" id="menu-backdrop"></div>
+
+      <div class="page-content">
       <!-- Painel de dashboard -->
       <div class="panel" id="dashboard-panel">
         <div class="panel-header">
@@ -1309,6 +65,15 @@
           </div>
           <div class="header-actions">
             <span class="live-pill offline" id="realtime-status">Tempo real: desconectado</span>
+            <button
+              id="period-btn"
+              class="btn btn-secondary btn-sm"
+              type="button"
+              data-plan="business"
+              data-plan-feature="period"
+            >
+              Filtrar periodo
+            </button>
             <button id="refresh-dashboard-btn" class="btn btn-secondary btn-sm" type="button">
               Atualizar agora
             </button>
@@ -1344,13 +109,68 @@
 
         <div class="charts-grid">
           <div class="chart-card">
-            <canvas id="chart-expiry"></canvas>
+            <div class="chart-header">
+              <span class="chart-title">Vencidos x em dia</span>
+              <button
+                class="chart-info"
+                type="button"
+                aria-label="Sobre o gráfico Vencidos x em dia"
+                data-tooltip="Compara produtos vencidos sem vendido/retirado (risco) com produtos ainda dentro da validade. Legenda: Vencidos, Em dia."
+              >
+                i
+              </button>
+            </div>
+            <div class="chart-canvas">
+              <canvas id="chart-expiry"></canvas>
+            </div>
           </div>
           <div class="chart-card">
-            <canvas id="chart-launch"></canvas>
+            <div class="chart-header">
+              <span class="chart-title">Vencidos por status</span>
+              <button
+                class="chart-info"
+                type="button"
+                aria-label="Sobre o gráfico Vencidos por status"
+                data-tooltip="Considera apenas itens vencidos (100%) e divide em: Ainda na área (risco), Vendidos e Retirados. Legenda: Ainda na área, Vendidos, Retirados."
+              >
+                i
+              </button>
+            </div>
+            <div class="chart-canvas">
+              <canvas id="chart-expired-status"></canvas>
+            </div>
           </div>
           <div class="chart-card">
-            <canvas id="chart-buckets"></canvas>
+            <div class="chart-header">
+              <span class="chart-title">Lançados x não lançados</span>
+              <button
+                class="chart-info"
+                type="button"
+                aria-label="Sobre o gráfico Lançados x não lançados"
+                data-tooltip="Mostra a proporção de itens marcados como lançados para rebaixa vs. não lançados. Legenda: Lançados, Não lançados."
+              >
+                i
+              </button>
+            </div>
+            <div class="chart-canvas">
+              <canvas id="chart-launch"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <span class="chart-title">Faixas de vencimento</span>
+              <button
+                class="chart-info"
+                type="button"
+                aria-label="Sobre o gráfico Faixas de vencimento"
+                data-tooltip="Distribui itens não vendidos/retirados por dias até o vencimento. Legenda: Vencidos, 0-7 dias, 8-30 dias, 30+ dias."
+              >
+                i
+              </button>
+            </div>
+            <div class="chart-canvas">
+              <canvas id="chart-buckets"></canvas>
+            </div>
           </div>
         </div>
 
@@ -1363,11 +183,53 @@
             <div class="expiry-meta">
               <span class="expiry-updated" id="expiry-updated">Atualizado agora</span>
               <span class="expiry-count" id="expiry-count">0 itens</span>
+              <span
+                class="plan-badge plan-free plan-tooltip"
+                data-plan-badge="expiry"
+                data-tooltip="Lista de vencidos incluida no plano Free."
+              >
+                Vencidos Free
+              </span>
             </div>
           </div>
           <div class="expiry-list" id="expiry-list"></div>
         </div>
+
+        <div class="history-board is-collapsed" id="history-board">
+          <div class="expiry-header">
+            <div>
+              <h3>Histórico</h3>
+              <div class="panel-subtitle history-subtitle">
+                Vendidos ou retirados (somente para registro).
+              </div>
+            </div>
+            <div class="expiry-meta">
+              <span class="expiry-count" id="history-count">0 itens</span>
+              <span
+                class="plan-badge plan-locked plan-tooltip"
+                id="history-badge"
+                data-plan-badge="history"
+                data-tooltip="Historico completo no plano Business"
+              >
+                Historico completo
+              </span>
+              <button
+                class="btn btn-secondary btn-sm history-toggle"
+                type="button"
+                id="history-toggle-btn"
+                aria-expanded="false"
+                data-plan="business"
+                data-plan-feature="history"
+                data-plan-mode="soft"
+              >
+                Mostrar histórico
+              </button>
+            </div>
+          </div>
+          <div class="history-list" id="history-list"></div>
+        </div>
       </div>
+    </div>
 
       <!-- Painel de planilha -->
       <div class="panel" id="planilha-panel">
@@ -1379,12 +241,34 @@
             </div>
           </div>
           <div class="header-actions">
-            <button id="fetch-btn" class="btn btn-primary" type="button">
+            <button
+              id="fetch-btn"
+              class="btn btn-primary"
+              type="button"
+              data-plan="business"
+              data-plan-feature="import"
+              data-plan-mode="soft"
+            >
               Buscar planilha do servidor
             </button>
+            <span
+              class="plan-badge plan-locked plan-tooltip plan-badge-inline"
+              id="import-badge"
+              data-plan-badge="import"
+              data-tooltip="Importacao automatica no plano Business"
+            >
+              Importacao Business
+            </span>
             <button id="open-form-btn" class="btn btn-secondary" type="button">
               Cadastrar produto
             </button>
+            <span
+              class="plan-badge plan-free plan-tooltip plan-badge-inline"
+              data-plan-badge="manual"
+              data-tooltip="Cadastro manual incluido no plano Free."
+            >
+              Cadastro Free
+            </span>
           </div>
         </div>
 
@@ -1394,30 +278,29 @@
           <span>Categoria:</span>
           <select id="category-filter"></select>
           <div class="toolbar-spacer"></div>
-          <div class="env-switch">
-            <label for="env-select">Ambiente:</label>
-            <select id="env-select" disabled title="Temporariamente desabilitado">
-              <option value="prod">Produção</option>
-              <option value="test">Teste</option>
-            </select>
-            <button class="btn btn-secondary btn-sm" type="button" id="test-webhooks-btn" disabled title="Temporariamente desabilitado">
-              Testar webhooks
-            </button>
-          </div>
-          <button class="btn btn-secondary btn-sm" type="button" id="export-xlsx-btn">
+          <button class="btn btn-secondary btn-sm" type="button" id="export-xlsx-btn" data-plan="business" data-plan-feature="export">
             Exportar XLSX
           </button>
-          <button class="btn btn-secondary btn-sm" type="button" id="export-csv-btn">
+          <button class="btn btn-secondary btn-sm" type="button" id="export-csv-btn" data-plan="business" data-plan-feature="export">
             Exportar CSV
           </button>
-          <button class="btn btn-secondary btn-sm" type="button" id="export-json-btn">
+          <button class="btn btn-secondary btn-sm" type="button" id="export-json-btn" data-plan="business" data-plan-feature="export">
             Exportar JSON
           </button>
-          <button class="btn btn-secondary btn-sm" type="button" id="export-pdf-btn">
+          <button class="btn btn-secondary btn-sm" type="button" id="export-pdf-btn" data-plan="business" data-plan-feature="export">
             Exportar PDF
           </button>
+          <span
+            class="plan-badge plan-locked plan-tooltip plan-badge-inline"
+            id="export-badge"
+            data-plan-badge="export"
+            data-tooltip="Exportacao disponivel no plano Business"
+          >
+            Exportacao Business
+          </span>
         </div>
 
+        <div class="plan-banner" id="plan-limit-banner" aria-live="polite"></div>
         <div class="bulk-actions" id="bulk-actions">
           <div class="bulk-info">
             <div id="bulk-count">Nenhum produto selecionado.</div>
@@ -1443,6 +326,21 @@
         </div>
 
         <div id="status"></div>
+        <div class="plan-cta" id="plan-cta" aria-live="polite"></div>
+
+        <div class="table-controls" id="table-controls">
+          <div class="table-count" id="table-count"></div>
+          <button class="btn btn-secondary btn-sm" type="button" id="table-toggle-btn">
+            Mostrar todos
+          </button>
+          <span
+            class="plan-badge plan-free plan-tooltip"
+            data-plan-badge="limit"
+            data-tooltip="Plano Free permite ate 50 produtos por mes. Business e ilimitado."
+          >
+            Limite Free
+          </span>
+        </div>
 
         <div id="output"></div>
       </div>
@@ -1509,6 +407,7 @@
         <p id="mensagem"></p>
       </div>
     </div>
+    </div>
     <!-- Modal de edição (planilha) -->
     <div id="edit-modal">
       <div class="modal-card">
@@ -1572,6 +471,43 @@
         <div class="detail-meta" id="detail-meta"></div>
         <div class="detail-list" id="detail-list"></div>
       </div>
+    </div>
+
+    <button class="assistant-fab" id="assistant-fab" type="button" aria-haspopup="dialog" aria-controls="assistant-modal">
+      Assistente
+    </button>
+    <div class="assistant-modal" id="assistant-modal" aria-hidden="true">
+      <div class="assistant-card" role="dialog" aria-modal="true" aria-label="Assistente">
+        <div class="assistant-header">
+          <div>
+            <div class="assistant-title">Assistente</div>
+            <div class="assistant-subtitle">Envie mensagens para o n8n</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" type="button" id="assistant-close-btn">
+            Fechar
+          </button>
+        </div>
+        <div class="assistant-messages" id="assistant-messages"></div>
+        <div class="assistant-input-row">
+          <input id="assistant-input" type="text" placeholder="Digite sua mensagem" />
+          <button class="btn btn-primary btn-sm" type="button" id="assistant-send-btn">
+            Enviar
+          </button>
+        </div>
+        <div class="assistant-status" id="assistant-status"></div>
+      </div>
+    </div>
+
+    <div class="upgrade-toast" id="upgrade-toast" role="status" aria-live="polite">
+      <div class="upgrade-toast-top">
+        <strong>Melhore seu plano</strong>
+        <button class="btn btn-secondary btn-xs" type="button" id="upgrade-toast-close">Fechar</button>
+      </div>
+      <p>
+        Plano Free: ate 50 produtos por mes, sem relatorios personalizados.
+        Voce recebe apenas o alarme diario do vencimento do dia.
+      </p>
+      <a class="btn btn-primary btn-sm" href="planos.html">Melhorar plano</a>
     </div>
 
     <!-- Dependências -->
