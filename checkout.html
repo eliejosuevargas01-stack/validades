@@ -64,7 +64,7 @@
         border-radius: 20px;
         box-shadow: var(--shadow);
         padding: 1.75rem;
-        width: min(520px, 100%);
+        width: min(980px, 100%);
         position: relative;
         z-index: 1;
       }
@@ -104,6 +104,37 @@
         font-size: 1.5rem;
         font-weight: 700;
         color: var(--accent-primary);
+      }
+      .checkout-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+      }
+      .checkout-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .checkout-side {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+      }
+      .pix-placeholder {
+        width: 100%;
+        min-height: 280px;
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #f8fafc;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.9rem;
       }
       form {
         display: flex;
@@ -212,12 +243,22 @@
         background: #f8fafc;
         font-size: 0.85rem;
         color: var(--text-muted);
+        width: 100%;
+        align-items: center;
+        text-align: center;
       }
       .pix-area img {
-        max-width: 220px;
+        width: min(280px, 100%);
+        height: auto;
         border-radius: 8px;
       }
+      .pix-area div {
+        word-break: break-all;
+      }
       @media (max-width: 520px) {
+        .checkout-grid {
+          grid-template-columns: 1fr;
+        }
         .field-grid {
           grid-template-columns: 1fr;
         }
@@ -237,151 +278,161 @@
         </div>
       </div>
 
-      <div class="plan">
-        <h2>Plano Business</h2>
-        <div class="price">R$ 150,00 / mes</div>
-      </div>
+      <div class="checkout-grid">
+        <div class="checkout-form">
+          <div class="plan">
+            <h2>Plano Business</h2>
+            <div class="price">R$ 150,00 / mes</div>
+          </div>
 
-      <form id="form-checkout">
-        <div class="field">
-          <label for="checkout-name">Nome completo</label>
-          <input id="checkout-name" type="text" autocomplete="name" required />
-        </div>
-        <div class="field">
-          <label for="checkout-email">Email</label>
-          <input id="checkout-email" type="email" autocomplete="email" required />
-        </div>
-        <div class="field">
-          <label for="checkout-company">Empresa</label>
-          <input id="checkout-company" type="text" autocomplete="organization" required />
-        </div>
-        <div class="field">
-          <label>Documento</label>
-          <div class="radio-group">
-            <label class="radio-pill">
-              <input type="radio" name="doc-type" value="cpf" checked />
-              CPF
-            </label>
-            <label class="radio-pill">
-              <input type="radio" name="doc-type" value="cnpj" />
-              CNPJ
-            </label>
-          </div>
-        </div>
-        <div class="field" id="cpf-field">
-          <label for="checkout-cpf">CPF</label>
-          <input
-            id="checkout-cpf"
-            type="text"
-            inputmode="numeric"
-            autocomplete="off"
-            minlength="11"
-            maxlength="11"
-            pattern="\d{11}"
-            placeholder="Somente numeros (11 digitos)"
-            required
-          />
-        </div>
-        <div class="field hidden" id="cnpj-field">
-          <label for="checkout-cnpj">CNPJ</label>
-          <input
-            id="checkout-cnpj"
-            type="text"
-            inputmode="numeric"
-            autocomplete="off"
-            minlength="14"
-            maxlength="14"
-            pattern="\d{14}"
-            placeholder="Somente numeros (14 digitos)"
-          />
-        </div>
-        <div class="field">
-          <label>Metodo de pagamento</label>
-          <div class="radio-group">
-            <label class="radio-pill">
-              <input type="radio" name="payment" value="pix" checked />
-              PIX
-            </label>
-            <label class="radio-pill">
-              <input type="radio" name="payment" value="card" />
-              Cartao
-            </label>
-          </div>
-        </div>
-        <div class="payment-details" id="card-details">
-          <div class="card-brand">
-            <img src="https://www.mercadopago.com/org-img/MP3/API/logos/visa.gif" alt="Visa" />
-            <span>Visa (credito)</span>
-          </div>
-          <div class="field">
-            <label for="cardholderName">Nome no cartao</label>
-            <input id="cardholderName" type="text" autocomplete="cc-name" />
-          </div>
-          <div class="field">
-            <label for="cardholderEmail">Email</label>
-            <input id="cardholderEmail" type="email" autocomplete="email" />
-          </div>
-          <div class="field">
-            <label for="docNumber">CPF/CNPJ</label>
-            <input
-              id="docNumber"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              placeholder="Somente numeros"
-            />
-          </div>
-          <div class="field">
-            <label for="cardNumber">Numero do cartao</label>
-            <input
-              id="cardNumber"
-              type="text"
-              inputmode="numeric"
-              autocomplete="cc-number"
-              maxlength="16"
-              placeholder="0000 0000 0000 0000"
-            />
-          </div>
-          <div class="field-grid-3">
+          <form id="form-checkout">
             <div class="field">
-              <label for="expirationMonth">MM</label>
+              <label for="checkout-name">Nome completo</label>
+              <input id="checkout-name" type="text" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="checkout-email">Email</label>
+              <input id="checkout-email" type="email" autocomplete="email" required />
+            </div>
+            <div class="field">
+              <label for="checkout-company">Empresa</label>
+              <input id="checkout-company" type="text" autocomplete="organization" required />
+            </div>
+            <div class="field">
+              <label>Documento</label>
+              <div class="radio-group">
+                <label class="radio-pill">
+                  <input type="radio" name="doc-type" value="cpf" checked />
+                  CPF
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="doc-type" value="cnpj" />
+                  CNPJ
+                </label>
+              </div>
+            </div>
+            <div class="field" id="cpf-field">
+              <label for="checkout-cpf">CPF</label>
               <input
-                id="expirationMonth"
+                id="checkout-cpf"
                 type="text"
                 inputmode="numeric"
-                autocomplete="cc-exp-month"
-                placeholder="MM"
-                maxlength="2"
+                autocomplete="off"
+                minlength="11"
+                maxlength="11"
+                pattern="\d{11}"
+                placeholder="Somente numeros (11 digitos)"
+                required
+              />
+            </div>
+            <div class="field hidden" id="cnpj-field">
+              <label for="checkout-cnpj">CNPJ</label>
+              <input
+                id="checkout-cnpj"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                minlength="14"
+                maxlength="14"
+                pattern="\d{14}"
+                placeholder="Somente numeros (14 digitos)"
               />
             </div>
             <div class="field">
-              <label for="expirationYear">AA</label>
-              <input
-                id="expirationYear"
-                type="text"
-                inputmode="numeric"
-                autocomplete="cc-exp-year"
-                placeholder="AA"
-                maxlength="2"
-              />
+              <label>Metodo de pagamento</label>
+              <div class="radio-group">
+                <label class="radio-pill">
+                  <input type="radio" name="payment" value="pix" checked />
+                  PIX
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="payment" value="card" />
+                  Cartao
+                </label>
+              </div>
             </div>
-            <div class="field">
-              <label for="securityCode">CVV</label>
-              <input
-                id="securityCode"
-                type="text"
-                inputmode="numeric"
-                autocomplete="cc-csc"
-                maxlength="3"
-                placeholder="000"
-              />
+            <div class="payment-details" id="card-details">
+              <div class="card-brand">
+                <img src="https://www.mercadopago.com/org-img/MP3/API/logos/visa.gif" alt="Visa" />
+                <span>Visa (credito)</span>
+              </div>
+              <div class="field">
+                <label for="cardholderName">Nome no cartao</label>
+                <input id="cardholderName" type="text" autocomplete="cc-name" />
+              </div>
+              <div class="field">
+                <label for="cardholderEmail">Email</label>
+                <input id="cardholderEmail" type="email" autocomplete="email" />
+              </div>
+              <div class="field">
+                <label for="docNumber">CPF/CNPJ</label>
+                <input
+                  id="docNumber"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  placeholder="Somente numeros"
+                />
+              </div>
+              <div class="field">
+                <label for="cardNumber">Numero do cartao</label>
+                <input
+                  id="cardNumber"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="cc-number"
+                  maxlength="16"
+                  placeholder="0000 0000 0000 0000"
+                />
+              </div>
+              <div class="field-grid-3">
+                <div class="field">
+                  <label for="expirationMonth">MM</label>
+                  <input
+                    id="expirationMonth"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="cc-exp-month"
+                    placeholder="MM"
+                    maxlength="2"
+                  />
+                </div>
+                <div class="field">
+                  <label for="expirationYear">AA</label>
+                  <input
+                    id="expirationYear"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="cc-exp-year"
+                    placeholder="AA"
+                    maxlength="2"
+                  />
+                </div>
+                <div class="field">
+                  <label for="securityCode">CVV</label>
+                  <input
+                    id="securityCode"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="cc-csc"
+                    maxlength="3"
+                    placeholder="000"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+            <button class="btn" type="submit">Gerar checkout</button>
+            <div class="status" id="checkout-status"></div>
+          </form>
         </div>
-        <button class="btn" type="submit">Gerar checkout</button>
-        <div class="status" id="checkout-status"></div>
-        <div class="pix-area" id="pix-area"></div>
-      </form>
+
+        <div class="checkout-side">
+          <div class="pix-placeholder" id="pix-placeholder">
+            Seu QR Code PIX aparece aqui apos gerar o checkout.
+          </div>
+          <div class="pix-area" id="pix-area"></div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -403,6 +454,7 @@
       const checkoutForm = document.getElementById("form-checkout");
       const statusEl = document.getElementById("checkout-status");
       const pixArea = document.getElementById("pix-area");
+      const pixPlaceholder = document.getElementById("pix-placeholder");
       const cpfField = document.getElementById("cpf-field");
       const cnpjField = document.getElementById("cnpj-field");
       const cpfInput = document.getElementById("checkout-cpf");
@@ -420,6 +472,9 @@
 
       const CHECKOUT_ENDPOINTS = [
         "https://myn8n.seommerce.shop/webhook/checkout",
+      ];
+      const CHECKOUT_CONFIRM_ENDPOINTS = [
+        "https://myn8n.seommerce.shop/webhook/checkout-confirm",
       ];
 
       function setStatus(text, type = "") {
@@ -558,9 +613,39 @@
         );
       }
 
+      function extractPaymentStatus(data) {
+        const payload = Array.isArray(data) ? data[0] : data;
+        if (!payload || typeof payload !== "object") {
+          return { approved: false, status: "" };
+        }
+        const status = String(payload.status || payload.payment_status || payload.state || "").toLowerCase();
+        const approved =
+          ["approved", "authorized", "paid", "succeeded", "success"].includes(status) ||
+          payload.approved === true ||
+          payload.success === true ||
+          payload.ok === true;
+        return { approved, status };
+      }
+
+      async function confirmBusinessPlan(email) {
+        if (!email) return;
+        try {
+          await postJsonWithFallback(CHECKOUT_CONFIRM_ENDPOINTS, {
+            email,
+            business: true,
+          });
+          localStorage.setItem("plan_type", "business");
+        } catch (err) {
+          console.warn("Falha ao confirmar plano Business:", err);
+        }
+      }
+
       function renderPix(data) {
         if (!pixArea) return;
         pixArea.innerHTML = "";
+        if (pixPlaceholder) {
+          pixPlaceholder.style.display = "none";
+        }
         const payload = Array.isArray(data) ? data[0] : data;
         if (!payload || typeof payload !== "object") return;
         const txData = payload.point_of_interaction?.transaction_data || {};
@@ -711,6 +796,9 @@
         }
         setStatus("Gerando checkout...");
         pixArea.style.display = "none";
+        if (pixPlaceholder) {
+          pixPlaceholder.style.display = "flex";
+        }
         try {
           const documentNumber = docType === "cpf" ? cpf : cnpj;
           const pixPayload =
@@ -796,6 +884,10 @@
           const redirectUrl = extractCheckoutUrl(data);
           if (paymentMethod === "pix" && data) {
             renderPix(data);
+          }
+          const paymentStatus = extractPaymentStatus(data);
+          if (paymentStatus.approved) {
+            await confirmBusinessPlan(email);
           }
           if (redirectUrl) {
             setStatus("Redirecionando...", "ok");

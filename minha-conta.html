@@ -65,10 +65,19 @@
               <span
                 class="plan-badge plan-free plan-tooltip"
                 id="account-plan-badge"
-                data-tooltip="Voce esta usando o plano gratuito"
+                data-tooltip="Plano Free ativo - funcionalidades basicas"
               >
                 Plano Free
               </span>
+              <a
+                class="btn btn-primary btn-xs"
+                id="account-upgrade-btn"
+                data-upgrade-cta
+                href="planos.html"
+                aria-label="Melhorar plano"
+              >
+                Melhorar plano
+              </a>
             </div>
           </div>
 
@@ -164,7 +173,7 @@
               <span
                 class="plan-badge plan-locked plan-tooltip plan-badge-inline"
                 data-plan-badge="alerts"
-                data-tooltip="Alertas por email disponiveis no plano Business"
+                data-tooltip="Alertas automaticos por e-mail (Business)"
               >
                 Alertas Business
               </span>
@@ -204,6 +213,7 @@
       (function applyPlanLabels() {
         const planType = localStorage.getItem("plan_type") === "business" ? "business" : "free";
         const accountBadge = document.getElementById("account-plan-badge");
+        const accountUpgradeBtn = document.getElementById("account-upgrade-btn");
         if (accountBadge) {
           const isBusiness = planType === "business";
           accountBadge.textContent = isBusiness ? "Plano Business" : "Plano Free";
@@ -211,8 +221,11 @@
           accountBadge.classList.toggle("plan-business", isBusiness);
           accountBadge.setAttribute(
             "data-tooltip",
-            isBusiness ? "Voce esta no plano Business" : "Voce esta usando o plano gratuito"
+            isBusiness ? "Plano Business ativo" : "Plano Free ativo - funcionalidades basicas"
           );
+          if (accountUpgradeBtn) {
+            accountUpgradeBtn.style.display = isBusiness ? "none" : "inline-flex";
+          }
         }
 
         const alertRow = document.querySelector('[data-plan-feature="alerts"]');
@@ -225,7 +238,7 @@
           if (badge) badge.classList.add("plan-business");
           if (badge) badge.classList.remove("plan-locked");
           if (badge) badge.textContent = "Business";
-          if (badge) badge.setAttribute("data-tooltip", "Recurso ativo no plano Business");
+          if (badge) badge.setAttribute("data-tooltip", "Recurso ativo");
           return;
         }
         alertRow.classList.add("plan-locked");

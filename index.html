@@ -29,9 +29,18 @@
         </div>
       <div class="top-actions">
         <span class="status-pill expiry-green">Online</span>
-        <span class="plan-badge plan-free plan-tooltip" id="plan-badge" data-tooltip="Voce esta usando o plano gratuito">
+        <span class="plan-badge plan-free plan-tooltip" id="plan-badge" data-tooltip="Plano Free ativo - funcionalidades basicas">
           Plano Free
         </span>
+        <a
+          class="btn btn-primary btn-sm"
+          id="upgrade-btn"
+          data-upgrade-cta
+          href="planos.html"
+          aria-label="Melhorar plano"
+        >
+          Melhorar plano
+        </a>
         <button id="logout-btn" class="btn btn-error btn-sm" type="button">
           Sair
         </button>
@@ -61,6 +70,13 @@
             <h2>Painel em tempo real</h2>
             <div class="panel-subtitle">
               KPIs e gráficos atualizados automaticamente.
+              <span
+                class="plan-badge plan-locked plan-tooltip plan-badge-inline"
+                data-plan-badge="reports"
+                data-tooltip="Relatorios personalizados para analise completa (Business)"
+              >
+                Relatorios Business
+              </span>
             </div>
           </div>
           <div class="header-actions">
@@ -186,7 +202,7 @@
               <span
                 class="plan-badge plan-free plan-tooltip"
                 data-plan-badge="expiry"
-                data-tooltip="Lista de vencidos incluida no plano Free."
+                data-tooltip="Lista de vencidos incluida no Free"
               >
                 Vencidos Free
               </span>
@@ -209,7 +225,7 @@
                 class="plan-badge plan-locked plan-tooltip"
                 id="history-badge"
                 data-plan-badge="history"
-                data-tooltip="Historico completo no plano Business"
+                data-tooltip="Historico completo e sem limites (Business)"
               >
                 Historico completo
               </span>
@@ -255,7 +271,7 @@
               class="plan-badge plan-locked plan-tooltip plan-badge-inline"
               id="import-badge"
               data-plan-badge="import"
-              data-tooltip="Importacao automatica no plano Business"
+              data-tooltip="Importacao automatica de planilhas (Business)"
             >
               Importacao Business
             </span>
@@ -265,7 +281,7 @@
             <span
               class="plan-badge plan-free plan-tooltip plan-badge-inline"
               data-plan-badge="manual"
-              data-tooltip="Cadastro manual incluido no plano Free."
+              data-tooltip="Cadastro manual disponivel no Free"
             >
               Cadastro Free
             </span>
@@ -294,7 +310,7 @@
             class="plan-badge plan-locked plan-tooltip plan-badge-inline"
             id="export-badge"
             data-plan-badge="export"
-            data-tooltip="Exportacao disponivel no plano Business"
+            data-tooltip="Exportacao de dados em XLSX, CSV e PDF (Business)"
           >
             Exportacao Business
           </span>
@@ -336,9 +352,16 @@
           <span
             class="plan-badge plan-free plan-tooltip"
             data-plan-badge="limit"
-            data-tooltip="Plano Free permite ate 50 produtos por mes. Business e ilimitado."
+            data-tooltip="Free: ate 50 produtos/mes | Business: ilimitado"
           >
             Limite Free
+          </span>
+          <span
+            class="plan-badge plan-locked plan-tooltip"
+            data-plan-badge="unlimited"
+            data-tooltip="Produtos ilimitados sem restricoes (Business)"
+          >
+            Ilimitado Business
           </span>
         </div>
 
@@ -500,12 +523,13 @@
 
     <div class="upgrade-toast" id="upgrade-toast" role="status" aria-live="polite">
       <div class="upgrade-toast-top">
-        <strong>Melhore seu plano</strong>
+        <strong>Desbloqueie mais recursos</strong>
         <button class="btn btn-secondary btn-xs" type="button" id="upgrade-toast-close">Fechar</button>
       </div>
       <p>
-        Plano Free: ate 50 produtos por mes, sem relatorios personalizados.
-        Voce recebe apenas o alarme diario do vencimento do dia.
+        No plano Free voce controla ate 50 produtos por mes.
+        No Business, tenha produtos ilimitados, relatorios completos,
+        importacao automatica e exportacao de dados.
       </p>
       <a class="btn btn-primary btn-sm" href="planos.html">Melhorar plano</a>
     </div>

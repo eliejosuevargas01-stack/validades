@@ -86,6 +86,7 @@ const menuBackdrop = document.getElementById("menu-backdrop");
 const planBadge = document.getElementById("plan-badge");
 const planCta = document.getElementById("plan-cta");
 const planLimitBanner = document.getElementById("plan-limit-banner");
+const upgradeBtn = document.getElementById("upgrade-btn");
 const ENV_KEY = "gp_env";
 const PLAN_KEY = "plan_type";
 const PLAN_FREE = "free";
@@ -135,11 +136,14 @@ function updatePlanBadge() {
   planBadge.classList.toggle("plan-business", business);
   planBadge.setAttribute(
     "data-tooltip",
-    business ? "Voce esta no plano Business" : "Voce esta usando o plano gratuito"
+    business ? "Plano Business ativo" : "Plano Free ativo - funcionalidades basicas"
   );
   if (business && planCta) {
     planCta.classList.remove("is-visible");
     planCta.innerHTML = "";
+  }
+  if (upgradeBtn) {
+    upgradeBtn.style.display = business ? "none" : "inline-flex";
   }
 }
 
@@ -160,10 +164,10 @@ function showPlanCta(message, ctaText = "Melhorar plano") {
 function applyPlanLocks() {
   const business = isBusinessPlan();
   const featureMessages = {
-    export: "Exportacao disponivel no plano Business.",
-    import: "Importacao automatica disponivel no plano Business.",
-    history: "Historico completo no plano Business.",
-    period: "Filtros de periodo e historico completo no Business.",
+    export: "Exporte seus dados em XLSX, CSV ou PDF com o plano Business",
+    import: "Importacao automatica de planilhas disponivel no plano Business",
+    history: "Acesse todo o historico de movimentacoes no plano Business",
+    period: "Filtros por periodo e historico completo disponiveis no Business",
   };
   document.querySelectorAll("[data-plan='business']").forEach((el) => {
     const feature = el.getAttribute("data-plan-feature") || "business";
@@ -177,10 +181,10 @@ function applyPlanLocks() {
     }
     el.classList.add("plan-locked", "plan-tooltip");
     el.setAttribute("aria-disabled", "true");
-    el.setAttribute(
-      "data-tooltip",
-      featureMessages[feature] || "Disponivel no plano Business."
-    );
+      el.setAttribute(
+        "data-tooltip",
+        featureMessages[feature] || "Funcionalidade disponivel no plano Business"
+      );
     if (el.tagName === "BUTTON") {
       el.disabled = false;
     }
@@ -191,7 +195,7 @@ function applyPlanLocks() {
           event.preventDefault();
           event.stopPropagation();
         }
-        showPlanCta(featureMessages[feature] || "Disponivel no plano Business.");
+        showPlanCta(featureMessages[feature] || "Funcionalidade disponivel no plano Business");
       });
       el.dataset.planBound = "1";
     }
@@ -225,7 +229,7 @@ function updatePlanLimitBanner(total) {
   planLimitBanner.innerHTML = "";
   const text = document.createElement("span");
   text.textContent =
-    "Limite do plano Free atingido: 50 produtos por mes. No Business, produtos ilimitados, importacao e exportacao.";
+    "Voce atingiu o limite do plano Free (50 produtos). No Business, cadastre produtos ilimitados e use importacao e exportacao.";
   const link = document.createElement("a");
   link.href = "planos.html";
   link.className = "btn btn-primary btn-xs";
@@ -1133,7 +1137,7 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
         statusEl.textContent = "Planilha carregada com sucesso.";
         updateDashboardFromSheet();
         if (!isBusinessPlan() && !isRealtime) {
-          showPlanCta("Importacao automatica e exportacao completa no plano Business.");
+          showPlanCta("Importe e exporte planilhas automaticamente no plano Business");
         }
         return true;
       } catch (err) {
@@ -1183,7 +1187,7 @@ async function loadPlanilhaFromServer({ silent = false, reason = "" } = {}) {
     statusEl.textContent = "Planilha carregada com sucesso.";
     updateDashboardFromSheet();
     if (!isBusinessPlan() && !isRealtime) {
-      showPlanCta("Importacao automatica e exportacao completa no plano Business.");
+      showPlanCta("Importe e exporte planilhas automaticamente no plano Business");
     }
   } catch (err) {
     console.error(err);
@@ -1808,10 +1812,10 @@ function renderHistoryList(items) {
     const upsell = document.createElement("div");
     upsell.className = "history-empty plan-upsell";
     const text = document.createElement("div");
-    text.textContent = "Historico completo disponivel no plano Business.";
+    text.textContent = "Acesse todo o historico de movimentacoes no plano Business";
     const link = document.createElement("a");
     link.href = "planos.html";
-    link.textContent = "Ver planos";
+    link.textContent = "Comparar planos";
     upsell.appendChild(text);
     upsell.appendChild(link);
     historyList.appendChild(upsell);
@@ -2696,7 +2700,7 @@ function exportCurrentSheetToPdf() {
 
 exportXlsxBtn.addEventListener("click", () => {
   if (!isBusinessPlan()) {
-    showPlanCta("Exportacao disponivel no plano Business.");
+    showPlanCta("Exporte seus dados em XLSX, CSV ou PDF com o plano Business");
     return;
   }
   const current = getCurrentSheet();
@@ -2711,7 +2715,7 @@ exportXlsxBtn.addEventListener("click", () => {
 
 exportCsvBtn.addEventListener("click", () => {
   if (!isBusinessPlan()) {
-    showPlanCta("Exportacao disponivel no plano Business.");
+    showPlanCta("Exporte seus dados em XLSX, CSV ou PDF com o plano Business");
     return;
   }
   const current = getCurrentSheet();
@@ -2729,7 +2733,7 @@ exportCsvBtn.addEventListener("click", () => {
 
 exportJsonBtn.addEventListener("click", () => {
   if (!isBusinessPlan()) {
-    showPlanCta("Exportacao disponivel no plano Business.");
+    showPlanCta("Exporte seus dados em XLSX, CSV ou PDF com o plano Business");
     return;
   }
   const current = getCurrentSheet();
@@ -2749,7 +2753,7 @@ exportJsonBtn.addEventListener("click", () => {
 if (exportPdfBtn) {
   exportPdfBtn.addEventListener("click", () => {
     if (!isBusinessPlan()) {
-      showPlanCta("Exportacao disponivel no plano Business.");
+      showPlanCta("Exporte seus dados em XLSX, CSV ou PDF com o plano Business");
       return;
     }
     exportCurrentSheetToPdf();
