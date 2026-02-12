@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loadtest UI</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1124;
+      --panel: rgba(14, 22, 45, 0.9);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 10% 10%, #1d2b5a 0%, #0b1124 55%, #070b16 100%);
+      color: var(--text);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 16px 40px; display: grid; gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    h1 { margin: 0 0 6px; font-size: 1.4rem; }
+    .subtitle { margin: 0; color: var(--muted); }
+    label { font-size: 0.85rem; color: var(--muted); font-weight: 600; display: block; margin-bottom: 6px; }
+    input, button {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      width: 100%;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn { cursor: pointer; }
+    .btn-primary { background: linear-gradient(120deg, #2563eb, #38bdf8); border-color: transparent; }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.6); }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+    .kpi { padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.15); }
+    .kpi h3 { margin: 0 0 6px; font-size: 0.85rem; color: var(--muted); }
+    .kpi .value { font-size: 1.2rem; font-weight: 700; }
+    .logs { max-height: 360px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 0.85rem; }
+    .log-item { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .status { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Loadtest UI (Node)</h1>
+      <p class="subtitle">O navegador só exibe logs; o teste roda no servidor Node.</p>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <div>
+          <label>Webhook</label>
+          <input id="url" value="https://myn8n.seommerce.shop/webhook/planilha-atualizada" />
+        </div>
+        <div>
+          <label>Action</label>
+          <input id="action" value="atualizar_agenda" />
+        </div>
+        <div>
+          <label>Total</label>
+          <input id="total" type="number" value="1000" />
+        </div>
+        <div>
+          <label>Concorrência</label>
+          <input id="concurrency" type="number" value="50" />
+        </div>
+        <div>
+          <label>Timeout (ms)</label>
+          <input id="timeoutMs" type="number" value="30000" />
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px;">
+        <button class="btn btn-primary" id="start">Iniciar</button>
+        <button class="btn btn-danger" id="stop">Parar</button>
+        <span class="status" id="status">Pronto.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="kpis">
+        <div class="kpi"><h3>Enviadas</h3><div class="value" id="k-sent">0</div></div>
+        <div class="kpi"><h3>Concluídas</h3><div class="value" id="k-completed">0</div></div>
+        <div class="kpi"><h3>OK</h3><div class="value" id="k-ok">0</div></div>
+        <div class="kpi"><h3>ERRO</h3><div class="value" id="k-err">0</div></div>
+        <div class="kpi"><h3>Em voo</h3><div class="value" id="k-inflight">0</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="panel-title" style="font-weight:700; margin-bottom:8px;">Logs</div>
+      <div class="logs" id="logs"></div>
+    </div>
+  </div>
+
+  <script>
+    const els = {
+      url: document.getElementById('url'),
+      action: document.getElementById('action'),
+      total: document.getElementById('total'),
+      concurrency: document.getElementById('concurrency'),
+      timeoutMs: document.getElementById('timeoutMs'),
+      status: document.getElementById('status'),
+      logs: document.getElementById('logs'),
+      sent: document.getElementById('k-sent'),
+      completed: document.getElementById('k-completed'),
+      ok: document.getElementById('k-ok'),
+      err: document.getElementById('k-err'),
+      inflight: document.getElementById('k-inflight')
+    };
+
+    function addLog(msg) {
+      const div = document.createElement('div');
+      div.className = 'log-item';
+      div.textContent = msg;
+      els.logs.prepend(div);
+    }
+
+    function setKpi(data) {
+      if (!data) return;
+      if (data.sent != null) els.sent.textContent = data.sent;
+      if (data.completed != null) els.completed.textContent = data.completed;
+      if (data.ok != null) els.ok.textContent = data.ok;
+      if (data.err != null) els.err.textContent = data.err;
+      if (data.inflight != null) els.inflight.textContent = data.inflight;
+    }
+
+    const ev = new EventSource('/events');
+    ev.addEventListener('log', (e) => {
+      const data = JSON.parse(e.data || '{}');
+      if (data.message) addLog(data.message);
+    });
+    ev.addEventListener('progress', (e) => {
+      const data = JSON.parse(e.data || '{}');
+      setKpi(data);
+      els.status.textContent = `Progresso: ${data.completed || 0}/${data.total || 0}`;
+    });
+    ev.addEventListener('summary', (e) => {
+      const data = JSON.parse(e.data || '{}');
+      addLog(`Resumo: OK ${data.ok} | ERRO ${data.err} | duração ${data.duration}s`);
+      addLog(`Latências (ms): p50 ${data.p50} | p90 ${data.p90} | p95 ${data.p95} | p99 ${data.p99} | média ${data.avg}`);
+      els.status.textContent = 'Teste concluído.';
+    });
+
+    document.getElementById('start').addEventListener('click', async () => {
+      els.status.textContent = 'Iniciando...';
+      const payload = {
+        url: els.url.value.trim(),
+        action: els.action.value.trim(),
+        total: Number(els.total.value || 0),
+        concurrency: Number(els.concurrency.value || 0),
+        timeoutMs: Number(els.timeoutMs.value || 0)
+      };
+      const resp = await fetch('/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        addLog(data.error || 'Falha ao iniciar.');
+        els.status.textContent = 'Erro ao iniciar.';
+        return;
+      }
+      addLog('Teste iniciado.');
+    });
+
+    document.getElementById('stop').addEventListener('click', async () => {
+      await fetch('/stop', { method: 'POST' });
+      els.status.textContent = 'Parando...';
+      addLog('Parando teste...');
+    });
+  </script>
+</body>
+</html>

@@ -292,6 +292,7 @@ async def events(request: Request):
 
 
 @app.post("/webhook")
+@app.post("/webhook/")
 async def webhook(request: Request, payload: Any = Body(default_factory=dict)):
     require_notify_token(request)
     data = normalize_payload(payload)
@@ -300,6 +301,7 @@ async def webhook(request: Request, payload: Any = Body(default_factory=dict)):
 
 
 @app.post("/api/notify")
+@app.post("/api/notify/")
 async def notify(
     request: Request,
     payload: Any = Body(default_factory=dict),
@@ -312,6 +314,7 @@ async def notify(
 
 
 @app.post("/api/notify/{action}")
+@app.post("/api/notify/{action}/")
 async def notify_action(
     action: str,
     request: Request,
@@ -325,6 +328,9 @@ async def notify_action(
 
 
 @app.post("/api/planilha-atualizada")
+@app.post("/api/planilha-atualizada/")
+@app.post("/webhook/planilha-atualizada")
+@app.post("/webhook/planilha-atualizada/")
 async def planilha_atualizada(request: Request):
     if db_configured():
         await init_db_pool()
@@ -334,16 +340,25 @@ async def planilha_atualizada(request: Request):
 
 
 @app.post("/api/validade")
+@app.post("/api/validade/")
+@app.post("/webhook/validade")
+@app.post("/webhook/validade/")
 async def validade(request: Request):
     return await proxy_webhook(request, N8N_WEBHOOK_VALIDADE)
 
 
 @app.post("/api/barcode")
+@app.post("/api/barcode/")
+@app.post("/webhook/barcode")
+@app.post("/webhook/barcode/")
 async def barcode(request: Request):
     return await proxy_webhook(request, N8N_WEBHOOK_BARCODE)
 
 
 @app.post("/api/acoes")
+@app.post("/api/acoes/")
+@app.post("/webhook/acoes")
+@app.post("/webhook/acoes/")
 async def acoes(request: Request):
     return await proxy_webhook(request, N8N_WEBHOOK_ACOES)
 
