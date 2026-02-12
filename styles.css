@@ -1480,49 +1480,179 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 /* ==========================================================================
-   13. RESPONSIVIDADE (MOBILE)
+   13. RESPONSIVIDADE (MOBILE-FIRST)
    ========================================================================== */
-@media (max-width: 768px) {
-    .topbar { padding: 0 16px; }
-    .page { padding: 0 12px; }
-    .brand div { display: none; }
+.topbar {
+    padding: 0 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--header-height);
+}
+
+.brand div { display: none; }
+
+.page,
+.page-shell {
+    padding: 12px;
+    gap: 12px;
+}
+
+.page-content { gap: 12px; }
+
+.panel { padding: 14px; }
+
+.dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.metric-value { font-size: 1.55rem; }
+
+.charts-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    height: auto;
+}
+
+.chart-card { height: 200px; }
+
+.expiry-list,
+.history-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.expiry-list > div,
+.expiry-list > p,
+.expiry-item,
+.history-item {
+    min-height: 0;
+}
+
+.expiry-header {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.panel-plan { align-items: flex-start; }
+
+.toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.toolbar select { width: 100%; }
+
+.toolbar .btn { width: 100%; }
+
+.toolbar-spacer { display: none; }
+
+.table-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+}
+
+#output { overflow-x: auto; }
+
+#detail-modal .modal-card,
+#edit-modal .modal-card {
+    width: 96vw;
+    max-width: 96vw;
+    padding: 20px;
+}
+
+.detail-item-top {
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.upgrade-toast {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+}
+
+.plan-banner,
+.plan-cta {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+@media (min-width: 640px) {
+    .topbar {
+        padding: 0 16px;
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+
+    .brand div { display: block; }
+
+    .page,
+    .page-shell {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .page-content { gap: 16px; }
+
+    .panel { padding: 18px; }
+
+    .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .expiry-list,
+    .history-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .toolbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .toolbar .btn { width: auto; }
+}
+
+@media (min-width: 900px) {
+    .page,
+    .page-shell {
+        padding: 20px;
+        gap: 20px;
+    }
+
+    .page-content { gap: 20px; }
 
     .charts-grid {
-        grid-template-columns: 1fr;
-        height: auto;
-    }
-    .chart-card { height: 200px; }
-
-    .dashboard-grid { grid-template-columns: 1fr 1fr; }
-
-    .panel { padding: 15px; }
-
-    .expiry-list > div,
-    .expiry-list > p {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
     }
 
-    .toolbar { flex-direction: column; align-items: stretch; }
-    .toolbar-spacer { display: none; }
-    .table-controls { flex-direction: column; align-items: flex-start; }
+    .chart-card { height: 220px; }
 
-    #output { overflow-x: auto; }
+    .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 15px;
+    }
 
-    #detail-modal .modal-card { max-width: 92vw; }
-    .detail-item-top { align-items: flex-start; flex-direction: column; }
+    .expiry-list,
+    .history-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
-    .upgrade-toast {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
-        width: auto;
+    .table-controls {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .plan-banner,
     .plan-cta {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
     }
+}
+
+@media (min-width: 1200px) {
+    .expiry-list,
+    .history-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
