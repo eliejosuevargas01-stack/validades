@@ -198,6 +198,24 @@ async def fetch_table_rows() -> list[dict]:
     return [dict(row) for row in rows]
 
 
+async def build_notify_payload(
+    payload: Any,
+    action: Optional[str] = None,
+) -> tuple[Dict[str, Any], Optional[int]]:
+    data = normalize_payload(payload)
+    if action:
+        data.setdefault("action", action)
+
+    rows_count: Optional[int] = None
+    if db_configured():
+        await init_db_pool()
+        rows = await fetch_table_rows()
+        data["data"] = jsonable_encoder(rows)
+        rows_count = len(rows)
+
+    return data, rows_count
+
+
 def rows_signature(rows: list[dict]) -> str:
     payload = json.dumps(rows, sort_keys=True, default=str)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -295,9 +313,12 @@ async def events(request: Request):
 @app.post("/webhook/")
 async def webhook(request: Request, payload: Any = Body(default_factory=dict)):
     require_notify_token(request)
-    data = normalize_payload(payload)
+    data, rows_count = await build_notify_payload(payload)
     clients_count = broadcast(data)
-    return JSONResponse({"ok": True, "clients": clients_count})
+    response: Dict[str, Any] = {"ok": True, "clients": clients_count}
+    if rows_count is not None:
+        response["rows"] = rows_count
+    return JSONResponse(response)
 
 
 @app.post("/api/notify")
@@ -308,9 +329,12 @@ async def notify(
     action: Optional[str] = None,
 ):
     require_notify_token(request)
-    data = normalize_payload(payload)
+    data, rows_count = await build_notify_payload(payload, action=action)
     clients_count = broadcast(data)
-    return JSONResponse({"ok": True, "clients": clients_count})
+    response: Dict[str, Any] = {"ok": True, "clients": clients_count}
+    if rows_count is not None:
+        response["rows"] = rows_count
+    return JSONResponse(response)
 
 
 @app.post("/api/notify/{action}")
@@ -321,10 +345,12 @@ async def notify_action(
     payload: Any = Body(default_factory=dict),
 ):
     require_notify_token(request)
-    data = normalize_payload(payload)
-    data.setdefault("action", action)
+    data, rows_count = await build_notify_payload(payload, action=action)
     clients_count = broadcast(data)
-    return JSONResponse({"ok": True, "clients": clients_count})
+    response: Dict[str, Any] = {"ok": True, "clients": clients_count}
+    if rows_count is not None:
+        response["rows"] = rows_count
+    return JSONResponse(response)
 
 
 @app.post("/api/planilha-atualizada")

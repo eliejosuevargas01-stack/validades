@@ -8,82 +8,195 @@
         :root {
             color-scheme: dark;
             --bg: #0b1124;
-            --panel: rgba(14, 22, 45, 0.85);
-            --border: rgba(255, 255, 255, 0.08);
+            --panel: rgba(14, 22, 45, 0.9);
+            --border: rgba(255, 255, 255, 0.1);
             --text: #e2e8f0;
             --muted: #94a3b8;
             --accent: #38bdf8;
-            --accent-2: #22c55e;
-            --danger: #ef4444;
         }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
             font-family: "Segoe UI", Tahoma, Arial, sans-serif;
             background: radial-gradient(1200px 800px at 10% 10%, #1d2b5a 0%, #0b1124 55%, #070b16 100%);
             color: var(--text);
         }
-        .page-wrapper { min-height: 100vh; padding: 32px 16px 48px; }
-        .page-container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
-        .page-header h1 { margin: 0 0 6px; font-size: 1.6rem; }
+
+        .page-wrapper {
+            min-height: 100vh;
+            padding: 16px 12px 28px;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1120px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .page-header h1 {
+            margin: 0 0 6px;
+            font-size: 1.3rem;
+            line-height: 1.2;
+        }
+
         .subtitle { margin: 0; color: var(--muted); }
-        .navigation { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .navigation {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
         .nav-button {
+            display: block;
             text-decoration: none;
             color: var(--text);
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--border);
-            padding: 8px 12px;
+            padding: 9px 10px;
             border-radius: 10px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            text-align: center;
         }
+
         .nav-button:hover { border-color: rgba(56, 189, 248, 0.6); }
+
         .panel-card {
             background: var(--panel);
             border: 1px solid var(--border);
             border-radius: 14px;
-            padding: 16px;
+            padding: 12px;
             backdrop-filter: blur(6px);
         }
+
         .panel-title { font-weight: 700; margin-bottom: 12px; color: #f8fafc; }
+
         input, select, button {
             font: inherit;
             border-radius: 10px;
             border: 1px solid var(--border);
-            padding: 10px 12px;
+            width: 100%;
+            min-height: 42px;
+            padding: 9px 11px;
             background: rgba(255, 255, 255, 0.06);
             color: var(--text);
         }
+
         input::placeholder { color: var(--muted); }
-        .btn { cursor: pointer; }
+
+        .btn {
+            cursor: pointer;
+            width: 100%;
+        }
+
         .btn-primary { background: linear-gradient(120deg, #2563eb, #38bdf8); border-color: transparent; }
         .btn-secondary { background: rgba(255, 255, 255, 0.08); }
         .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
         .space-layer { position: fixed; inset: 0; pointer-events: none; opacity: 0.25; }
         .space-layer.stars { background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 32px 32px; }
         .space-layer.twinkle { background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 80px 80px; opacity: 0.15; }
         .space-layer.nebula { background: radial-gradient(500px 300px at 80% 20%, rgba(99, 102, 241, 0.25), transparent 60%); }
         .space-layer.galaxies { background: radial-gradient(400px 260px at 20% 80%, rgba(14, 165, 233, 0.2), transparent 60%); }
-        @media (max-width: 720px) {
-            .page-wrapper { padding: 24px 12px 32px; }
-            .page-header h1 { font-size: 1.3rem; }
+
+        .loadtest-page .panel-card { margin-bottom: 12px; }
+
+        .loadtest-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
         }
-        .loadtest-page .panel-card { margin-bottom: 16px; }
-        .loadtest-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-        .loadtest-form { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-        .loadtest-form label { font-size: 0.85rem; color: var(--muted); font-weight: 600; display:block; margin-bottom: 6px; }
-        .loadtest-form input, .loadtest-form select { width:100%; }
-        .loadtest-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
-        .loadtest-status { font-size: 0.9rem; color: var(--muted); }
-        .loadtest-list { display:flex; flex-direction:column; gap:8px; max-height: 420px; overflow:auto; }
-        .loadtest-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius: 10px; border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); }
+
+        .loadtest-form label {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .loadtest-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .loadtest-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .loadtest-status {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.35;
+        }
+
+        .loadtest-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 52vh;
+            overflow: auto;
+        }
+
+        .loadtest-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
         .loadtest-item.ok { border-color: rgba(16,185,129,0.45); background: rgba(16,185,129,0.08); }
         .loadtest-item.err { border-color: rgba(239,68,68,0.45); background: rgba(239,68,68,0.08); }
-        .loadtest-item .meta { font-size: 0.8rem; color: #cbd5f5; }
-        .loadtest-kpi { background: rgba(8,12,28,0.6); border:1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; }
+
+        .loadtest-item .meta {
+            font-size: 0.8rem;
+            color: #cbd5f5;
+            align-self: flex-end;
+        }
+
+        .loadtest-kpi {
+            background: rgba(8,12,28,0.6);
+            border:1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
         .loadtest-kpi h3 { margin:0 0 6px; font-size: 0.9rem; color: #e2e8f0; }
         .loadtest-kpi .value { font-size: 1.3rem; font-weight: 700; color: #fff; }
         .loadtest-note { font-size:0.85rem; color:#94a3b8; }
+
+        @media (min-width: 680px) {
+            .page-wrapper { padding: 24px 16px 36px; }
+            .page-container { gap: 16px; }
+            .page-header h1 { font-size: 1.55rem; }
+            .navigation { display: flex; flex-wrap: wrap; }
+            .nav-button { font-size: 0.9rem; padding: 8px 12px; }
+            .panel-card { padding: 16px; }
+            .btn { width: auto; }
+            .loadtest-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+            .loadtest-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+            .loadtest-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+            .loadtest-item { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+        }
+
+        @media (min-width: 980px) {
+            .page-wrapper { padding: 32px 20px 48px; }
+            .loadtest-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .loadtest-list { max-height: 420px; }
+        }
     </style>
 </head>
 <body class="presentation-page loadtest-page">
